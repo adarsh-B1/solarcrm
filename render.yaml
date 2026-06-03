@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: solarcrm
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: SUPABASE_URL
+        value: https://fxdirqyihucwwongstcb.supabase.co
+      - key: SUPABASE_ANON_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ4ZGlycXlpaHVjd3dvbmdzdGNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0Mjg0NDksImV4cCI6MjA5NjAwNDQ0OX0.g2-5MkkLZhdkPfQwc-oaeZHohQxC3l1Y4OztjaHqXHI
+      - key: JWT_SECRET
+        value: solarcrm_jwt_secret_bharat_solar_2026
