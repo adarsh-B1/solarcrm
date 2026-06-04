@@ -210,6 +210,7 @@ tr:hover td{background:var(--blue-light)}
     </div>
     <div class="topbar-right">
       <span style="color:#93C5FD;font-size:12px" id="trial-info"></span>
+      <button class="topbar-btn" id="portal-status-btn" onclick="showPortalConnect()" style="background:#D97706;border-color:#D97706">⚡ Connect Portal</button>
       <button class="topbar-btn" onclick="exportCSV()">Export CSV</button>
       <button class="topbar-btn" onclick="doLogout()">Sign Out</button>
     </div>
@@ -726,6 +727,91 @@ document.addEventListener('keydown', e => {
   if(e.key==='Enter'&&document.getElementById('register-card').style.display!=='none') doRegister();
   if(e.key==='Escape') { document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open')); }
 });
+</script>
+
+<!-- Portal Connect Modal -->
+<div class="modal-overlay" id="portal-modal">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-title">☀️ Connect PM Surya Ghar Portal</div>
+    <p style="color:var(--text-sec);margin-bottom:20px;font-size:14px;line-height:1.6">
+      Connect once — SolarCRM will automatically sync all your customers from the portal every 5 minutes. <strong>No extension needed.</strong>
+    </p>
+    
+    <div style="background:var(--blue-light);border-radius:10px;padding:16px;margin-bottom:20px">
+      <div style="font-weight:700;font-size:13px;color:var(--blue);margin-bottom:10px">📌 How to connect (one time only):</div>
+      <ol style="font-size:13px;color:var(--text-sec);line-height:2;padding-left:18px">
+        <li>Drag the button below to your <strong>bookmarks bar</strong></li>
+        <li>Go to <strong>vendor.pmsuryaghar.gov.in</strong> and log in</li>
+        <li>Click the <strong>"Sync to SolarCRM"</strong> bookmark</li>
+        <li>Done! Auto-sync starts immediately ✅</li>
+      </ol>
+    </div>
+
+    <div style="text-align:center;margin-bottom:20px">
+      <a id="bookmarklet-link" style="display:inline-block;background:var(--blue);color:#fff;padding:12px 24px;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;cursor:move" draggable="true">
+        ☀️ Sync to SolarCRM
+      </a>
+      <div style="font-size:12px;color:var(--text-sec);margin-top:8px">👆 Drag this to your bookmarks bar</div>
+    </div>
+
+    <div id="portal-connected-info" style="display:none;background:var(--green-bg);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--green);font-weight:600">
+      ✅ Portal connected! Last sync: <span id="last-sync-time">Never</span>
+    </div>
+
+    <div style="background:#FEF3C7;border-radius:8px;padding:12px;margin-bottom:16px">
+      <div style="font-size:12px;color:#92400E;font-weight:600">⚠️ Token expires after 8 hours</div>
+      <div style="font-size:12px;color:#92400E;margin-top:2px">Click the bookmark again after logging back into the portal</div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('portal-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Build bookmarklet
+function buildBookmarklet() {
+  const crmToken = localStorage.getItem('solarcrm_token') || '';
+  const code = `(function(){
+    var t=null;
+    for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);var v=localStorage.getItem(k);if(v&&v.length>30&&(k.toLowerCase().includes('token')||k.toLowerCase().includes('auth'))){t=v.replace(/['"]/g,'');break;}}
+    if(!t){try{var inj=angular.element(document.body).injector();if(inj){var h=inj.get('$http').defaults.headers.common;if(h&&h.Authorization)t=h.Authorization.replace('Bearer ','');}}catch(e){}}
+    if(!t){try{var keys=Object.keys(sessionStorage);for(var i=0;i<keys.length;i++){var v=sessionStorage.getItem(keys[i]);if(v&&v.length>30&&keys[i].toLowerCase().includes('token')){t=v.replace(/['"]/g,'');break;}}}catch(e){}}
+    if(!t){alert('Not found. Make sure you are logged into pmsuryaghar.gov.in');return;}
+    fetch('https://solarcrm-seaj.onrender.com/api/portal-token',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer ${crmToken}'},body:JSON.stringify({portalToken:t})}).then(function(r){return r.json();}).then(function(d){if(d.success){alert('Connected! Syncing '+d.count+' customers to SolarCRM.');}else{alert('Error: '+(d.error||'Try again'));}}).catch(function(){alert('Connection failed. Check internet.');});
+  })();`;
+  return 'javascript:' + encodeURIComponent(code);
+}
+
+function showPortalConnect() {
+  document.getElementById('bookmarklet-link').href = buildBookmarklet();
+  openModal('portal-modal');
+  // Check if already connected
+  if(vendor && vendor.portal_token_updated_at) {
+    document.getElementById('portal-connected-info').style.display='';
+    document.getElementById('last-sync-time').textContent = new Date(vendor.portal_token_updated_at).toLocaleString();
+    document.getElementById('portal-status-btn').style.background='#16A34A';
+    document.getElementById('portal-status-btn').style.borderColor='#16A34A';
+    document.getElementById('portal-status-btn').textContent='✅ Portal Connected';
+  }
+}
+
+// Poll for new customers every 30 seconds (server syncs every 5 min)
+setInterval(async function() {
+  if(!token) return;
+  try {
+    const res = await apiFetch('/api/customers');
+    if(!res.ok) return;
+    const raw = await res.json();
+    const newCustomers = raw.map(dbToLocal);
+    if(newCustomers.length !== customers.length) {
+      customers = newCustomers;
+      render(); updateDocSel(); updateMetrics();
+      showToast('☀️ ' + customers.length + ' customers synced from portal!', 4000);
+    }
+  } catch(e) {}
+}, 30000);
 </script>
 </body>
 </html>
