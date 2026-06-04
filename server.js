@@ -158,3 +158,146 @@ app.get('*', (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`SolarCRM running on port ${PORT}`));
+
+// ── Store portal token ──
+app.post('/api/portal-token', auth, async (req, res) => {
+  const { portalToken } = req.body;
+  if (!portalToken) return res.status(400).json({ error: 'No token provided' });
+  
+  // Store token for this vendor
+  await supabase.from('vendors').update({ 
+    portal_token: portalToken,
+    portal_token_updated_at: new Date()
+  }).eq('id', req.vendor.id);
+  
+  // Immediately fetch customers with this token
+  const customers = await fetchPortalCustomers(portalToken, req.vendor.id);
+  res.json({ success: true, count: customers });
+});
+
+// ── Fetch customers from portal API ──
+async function fetchPortalCustomers(portalToken, vendorId) {
+  try {
+    let allCustomers = [];
+    let pageNo = 1;
+    let hasMore = true;
+
+    while (hasMore) {
+      const response = await fetch(
+        `https://vendor.pmsuryaghar.gov.in/authenticate/api/verifyAccess/vendor/api/myapplication/getMyApplicationList?pageNo=${pageNo}&pageSize=25`,
+        {
+          headers: {
+            'Authorization': 'Bearer ' + portalToken,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!response.ok) break;
+      const data = await response.json();
+      
+      const list = data.data || data.applicationList || data.content || data.list || [];
+      if (!list.length) { hasMore = false; break; }
+      
+      allCustomers = allCustomers.concat(list);
+      
+      const total = data.totalCount || data.totalElements || data.total || 0;
+      if (allCustomers.length >= total || list.length < 25) hasMore = false;
+      else pageNo++;
+    }
+
+    if (!allCustomers.length) return 0;
+
+    // Map portal fields to our schema
+    const { data: existing } = await supabase.from('customers').select('*').eq('vendor_id', vendorId);
+    const existingMap = {};
+    (existing || []).forEach(c => {
+      if (c.consumer_acc) existingMap[c.consumer_acc] = c;
+      if (c.app_no) existingMap[c.app_no] = c;
+    });
+
+    const { data: vendor } = await supabase.from('vendors').select('company').eq('id', vendorId).single();
+    const prefix = (vendor?.company || 'SOL').slice(0, 3).toUpperCase();
+    let counter = (existing || []).length;
+
+    const rows = allCustomers.map(p => {
+      const consumerAcc = String(p.consumerNumber || p.consumer_number || p.caNumber || '');
+      const appNo = String(p.applicationNumber || p.application_number || p.appNo || '');
+      const existing_c = existingMap[consumerAcc] || existingMap[appNo];
+      
+      // Parse status
+      const statusRaw = (p.status || p.applicationStatus || '').replace(/\n/g, ' ').trim();
+      const s = statusRaw.toLowerCase();
+      const isDone = /\(disbursed\)|\(completed\)|disbursed/.test(s);
+      const isProgress = /\(in progress\)|in progress/.test(s);
+      const st = isDone ? 'done' : isProgress ? 'in-progress' : 'pending';
+
+      let agr='pending', fin='pending', dcr='pending', inst='pending', insp='pending', subReq='pending', subDisb='pending';
+      if (/upload agreement/.test(s))      { agr=st; }
+      else if (/^installation/.test(s))    { agr='done';fin='done';dcr=st==='done'?'done':'in-progress';inst=st; }
+      else if (/^inspection/.test(s))      { agr='done';fin='done';dcr='done';inst='done';insp=st; }
+      else if (/project commission/.test(s)){ agr='done';fin='done';dcr='done';inst='done';insp='done'; }
+      else if (/subsidy request/.test(s))  { agr='done';fin='done';dcr='done';inst='done';insp='done';subReq=st; }
+      else if (/subsidy disbursal/.test(s)){ agr='done';fin='done';dcr='done';inst='done';insp='done';subReq='done';subDisb=st; }
+
+      counter++;
+      const id = existing_c ? existing_c.id : prefix + '-' + String(counter).padStart(3, '0');
+
+      return {
+        id,
+        vendor_id: vendorId,
+        name: (p.consumerName || p.consumer_name || p.name || 'Unknown').trim(),
+        phone: String(p.mobileNumber || p.mobile || p.phone || '').replace(/\D/g, '').slice(-10),
+        kw: parseFloat(p.proposedCapacity || p.capacity || p.kw || 0),
+        consumer_acc: consumerAcc,
+        app_no: appNo,
+        discom: p.discomName || p.discom || '',
+        submitted_on: p.submittedOn || p.applicationDate || '',
+        status_raw: statusRaw,
+        agr, fin, dcr, inst, insp, sub_req: subReq, sub_disb: subDisb, sub: subDisb,
+        sanctioned_load: parseFloat(p.sanctionedLoad || p.sanctioned_load || 0),
+        loc: p.district || p.city || '',
+        notes: [appNo ? 'App No: '+appNo : '', p.discomName ? 'Discom: '+p.discomName : ''].filter(Boolean).join(' | '),
+        updated_at: new Date()
+      };
+    });
+
+    await supabase.from('customers').upsert(rows, { onConflict: 'id,vendor_id' });
+    return rows.length;
+  } catch(e) {
+    console.error('Portal fetch error:', e.message);
+    return 0;
+  }
+}
+
+// ── Auto-sync all vendors with stored tokens every 5 minutes ──
+async function autoSyncAllVendors() {
+  console.log('[AutoSync] Running sync for all vendors...');
+  const { data: vendors } = await supabase
+    .from('vendors')
+    .select('id, portal_token, portal_token_updated_at, plan, trial_ends_at')
+    .not('portal_token', 'is', null);
+
+  if (!vendors || !vendors.length) return;
+
+  for (const vendor of vendors) {
+    // Skip expired vendors
+    if (vendor.plan === 'expired') continue;
+    if (vendor.plan === 'trial' && new Date(vendor.trial_ends_at) < new Date()) continue;
+    
+    // Skip tokens older than 8 hours (they expire)
+    const tokenAge = (Date.now() - new Date(vendor.portal_token_updated_at)) / 3600000;
+    if (tokenAge > 8) {
+      console.log(`[AutoSync] Token expired for vendor ${vendor.id}`);
+      continue;
+    }
+
+    const count = await fetchPortalCustomers(vendor.portal_token, vendor.id);
+    console.log(`[AutoSync] Vendor ${vendor.id}: ${count} customers synced`);
+  }
+}
+
+// Run auto-sync every 5 minutes
+setInterval(autoSyncAllVendors, 5 * 60 * 1000);
+// Run once on startup after 10 seconds
+setTimeout(autoSyncAllVendors, 10000);
