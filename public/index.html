@@ -794,16 +794,55 @@ function buildBookmarklet() {
       crmToken = key.trim();
     }
     var t=null;
-    // Read eUT from localStorage (confirmed key on portal)
-    try {
-      var raw = localStorage.getItem('eUT');
-      if (raw && raw.length > 30) {
-        // Strip "Bearer " prefix if present
-        t = raw.replace(/^Bearer\s+/i, '').replace(/['"]/g, '').trim();
+    // Intercept the Bearer token from outgoing fetch/XHR requests
+    var captured = false;
+    var origFetch = window.fetch;
+    window.fetch = function(url, opts) {
+      if (!captured && opts && opts.headers) {
+        var h = opts.headers;
+        var auth = (typeof h.get === 'function') ? h.get('Authorization') : (h['Authorization'] || h['authorization'] || '');
+        if (auth && auth.includes('Bearer ')) {
+          t = auth.replace('Bearer ', '').trim();
+          captured = true;
+        }
       }
+      return origFetch.apply(this, arguments);
+    };
+    var origXHR = XMLHttpRequest.prototype.setRequestHeader;
+    XMLHttpRequest.prototype.setRequestHeader = function(name, value) {
+      if (!captured && name.toLowerCase() === 'authorization' && value.includes('Bearer ')) {
+        t = value.replace('Bearer ', '').trim();
+        captured = true;
+      }
+      return origXHR.apply(this, arguments);
+    };
+    // Trigger a request by clicking filter or navigating
+    // Wait up to 5 seconds for a request to fire
+    var waited = 0;
+    var checker = setInterval(function() {
+      waited += 500;
+      if (t) {
+        clearInterval(checker);
+        window.fetch = origFetch;
+        XMLHttpRequest.prototype.setRequestHeader = origXHR;
+        doSync(t);
+      } else if (waited >= 5000) {
+        clearInterval(checker);
+        window.fetch = origFetch;
+        XMLHttpRequest.prototype.setRequestHeader = origXHR;
+        alert('Could not capture token automatically.\n\nPlease:\n1. Click the Filter button on the portal page\n2. Then click this bookmark again');
+      }
+    }, 500);
+    // Try to trigger a request automatically
+    try {
+      origFetch('/authenticate/api/verifyAccess/vendor/api/myapplication/getMyApplicationList?pageNo=1&pageSize=1', {
+        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('eUT') || '') }
+      }).catch(function(){});
     } catch(e){}
-    if(!t){alert('Portal token not found. Make sure you are logged into vendor.pmsuryaghar.gov.in and try again.');return;}
-    fetch('https://solarcrm-seaj.onrender.com/api/portal-token',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+crmToken},body:JSON.stringify({portalToken:t})}).then(function(r){return r.json();}).then(function(d){if(d.success){alert('✅ Connected! Syncing '+d.count+' customers to SolarCRM.');}else{alert('Error: '+(d.error||'Try again'));}}).catch(function(e){alert('Connection failed: '+e.message);});
+    return; // doSync will be called by checker
+    function doSync(token) {
+      fetch('https://solarcrm-seaj.onrender.com/api/portal-token',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+crmToken},body:JSON.stringify({portalToken:token})}).then(function(r){return r.json();}).then(function(d){if(d.success){alert('✅ Connected! Syncing '+d.count+' customers to SolarCRM.');}else{alert('Error: '+(d.error||'Try again'));}}).catch(function(e){alert('Connection failed: '+e.message);});
+    }
   })();`;
   return 'javascript:' + encodeURIComponent(code);
 }
