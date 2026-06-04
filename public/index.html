@@ -212,6 +212,7 @@ tr:hover td{background:var(--blue-light)}
       <span style="color:#93C5FD;font-size:12px" id="trial-info"></span>
       <button class="topbar-btn" id="portal-status-btn" onclick="showPortalConnect()" style="background:#D97706;border-color:#D97706">⚡ Connect Portal</button>
       <button class="topbar-btn" onclick="exportCSV()">Export CSV</button>
+      <button class="topbar-btn" onclick="copyMyToken()" title="Copy your token for the bookmarklet">🔑 My Token</button>
       <button class="topbar-btn" onclick="doLogout()">Sign Out</button>
     </div>
   </div>
@@ -470,6 +471,11 @@ async function doRegister() {
   } catch(e) { err.textContent='Connection error'; err.style.display=''; btn.disabled=false; btn.textContent='Start Free Trial'; }
 }
 
+function copyMyToken() {
+  const t = localStorage.getItem('solarcrm_token');
+  if (!t) return;
+  navigator.clipboard.writeText(t).then(() => showToast('Token copied! Paste it when the bookmarklet asks.', 4000));
+}
 function doLogout() { token=null; vendor=null; customers=[]; localStorage.removeItem('solarcrm_token'); showAuth(); showLogin(); }
 
 // ── Render ──
@@ -772,14 +778,27 @@ document.addEventListener('keydown', e => {
 <script>
 // Build bookmarklet
 function buildBookmarklet() {
-  const crmToken = localStorage.getItem('solarcrm_token') || '';
+  // Token is read dynamically at click time from the CRM's localStorage
   const code = `(function(){
+    var crmToken = null;
+    try {
+      crmToken = window.opener && window.opener.localStorage ? window.opener.localStorage.getItem('solarcrm_token') : null;
+    } catch(e){}
+    if (!crmToken) {
+      // Try reading from a known key directly
+      try { crmToken = localStorage.getItem('solarcrm_token'); } catch(e){}
+    }
+    if (!crmToken) {
+      var key = prompt('Please paste your SolarCRM token (Settings > Token in SolarCRM):');
+      if (!key) { alert('Cancelled.'); return; }
+      crmToken = key.trim();
+    }
     var t=null;
-    for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);var v=localStorage.getItem(k);if(v&&v.length>30&&(k.toLowerCase().includes('token')||k.toLowerCase().includes('auth'))){t=v.replace(/['"]/g,'');break;}}
+    for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);var v=localStorage.getItem(k);if(v&&v.length>30&&(k.toLowerCase().includes('token')||k.toLowerCase().includes('auth'))&&!k.includes('solarcrm')){t=v.replace(/['"]/g,'');break;}}
     if(!t){try{var inj=angular.element(document.body).injector();if(inj){var h=inj.get('$http').defaults.headers.common;if(h&&h.Authorization)t=h.Authorization.replace('Bearer ','');}}catch(e){}}
     if(!t){try{var keys=Object.keys(sessionStorage);for(var i=0;i<keys.length;i++){var v=sessionStorage.getItem(keys[i]);if(v&&v.length>30&&keys[i].toLowerCase().includes('token')){t=v.replace(/['"]/g,'');break;}}}catch(e){}}
-    if(!t){alert('Not found. Make sure you are logged into pmsuryaghar.gov.in');return;}
-    fetch('https://solarcrm-seaj.onrender.com/api/portal-token',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer ${crmToken}'},body:JSON.stringify({portalToken:t})}).then(function(r){return r.json();}).then(function(d){if(d.success){alert('Connected! Syncing '+d.count+' customers to SolarCRM.');}else{alert('Error: '+(d.error||'Try again'));}}).catch(function(){alert('Connection failed. Check internet.');});
+    if(!t){alert('Portal token not found. Make sure you are logged into vendor.pmsuryaghar.gov.in');return;}
+    fetch('https://solarcrm-seaj.onrender.com/api/portal-token',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+crmToken},body:JSON.stringify({portalToken:t})}).then(function(r){return r.json();}).then(function(d){if(d.success){alert('✅ Connected! Syncing '+d.count+' customers to SolarCRM.');}else{alert('Error: '+(d.error||'Try again'));}}).catch(function(e){alert('Connection failed: '+e.message);});
   })();`;
   return 'javascript:' + encodeURIComponent(code);
 }
