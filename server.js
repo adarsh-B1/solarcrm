@@ -161,8 +161,10 @@ app.listen(PORT, () => console.log(`SolarCRM running on port ${PORT}`));
 
 // ── Store portal token ──
 app.post('/api/portal-token', auth, async (req, res) => {
-  const { portalToken } = req.body;
+  let { portalToken } = req.body;
   if (!portalToken) return res.status(400).json({ error: 'No token provided' });
+  // Strip Bearer prefix if present
+  portalToken = portalToken.replace(/^Bearer\s+/i, '').trim();
   
   // Store token for this vendor
   await supabase.from('vendors').update({ 
@@ -187,7 +189,7 @@ async function fetchPortalCustomers(portalToken, vendorId) {
         `https://vendor.pmsuryaghar.gov.in/authenticate/api/verifyAccess/vendor/api/myapplication/getMyApplicationList?pageNo=${pageNo}&pageSize=25`,
         {
           headers: {
-            'Authorization': 'Bearer ' + portalToken,
+            'Authorization': portalToken.startsWith('Bearer ') ? portalToken : 'Bearer ' + portalToken,
             'Content-Type': 'application/json'
           }
         }
