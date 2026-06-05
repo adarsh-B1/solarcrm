@@ -744,24 +744,21 @@ document.addEventListener('keydown', e => {
     </p>
     
     <div style="background:var(--blue-light);border-radius:10px;padding:16px;margin-bottom:20px">
-      <div style="font-weight:700;font-size:13px;color:var(--blue);margin-bottom:10px">📌 How to connect (one time only):</div>
+      <div style="font-weight:700;font-size:13px;color:var(--blue);margin-bottom:10px">📌 How to sync (takes 30 seconds):</div>
       <ol style="font-size:13px;color:var(--text-sec);line-height:2;padding-left:18px">
+        <li>Drag the button below to your <strong>bookmarks bar</strong></li>
         <li>Go to <strong>vendor.pmsuryaghar.gov.in</strong> and log in</li>
-        <li>Press <strong>F12</strong> → click <strong>Network</strong> tab</li>
-        <li>Click any column header to sort (triggers a request)</li>
-        <li>Click the <strong>getMyApplicationList</strong> request</li>
-        <li>Click <strong>Headers</strong> → copy the <strong>Authorization</strong> value</li>
-        <li>Paste it below and click <strong>Connect</strong></li>
+        <li>Go to <strong>My Application</strong> page</li>
+        <li>Click the <strong>"☀️ Sync to SolarCRM"</strong> bookmark</li>
+        <li>Wait for "Sync complete!" message ✅</li>
       </ol>
     </div>
 
-    <div style="margin-bottom:16px">
-      <label style="font-size:12px;font-weight:700;color:var(--text-sec);display:block;margin-bottom:6px;text-transform:uppercase">Paste Authorization Token</label>
-      <textarea id="portal-token-input" placeholder="Paste the Bearer token from Network tab here..." style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:'DM Mono',monospace;height:80px;outline:none;resize:none"></textarea>
-    </div>
-    <button class="btn btn-blue" style="width:100%;padding:12px;font-size:15px" onclick="connectPortalToken()">⚡ Connect & Sync Now</button>
-    <div style="margin-top:10px;text-align:center">
-      <a href="https://solarcrm-seaj.onrender.com/howto" target="_blank" style="font-size:12px;color:var(--blue)">📹 Watch how to get the token (30 seconds)</a>
+    <div style="text-align:center;margin-bottom:16px">
+      <a id="bookmarklet-link" href="#" style="display:inline-block;background:var(--blue);color:#fff;padding:14px 28px;border-radius:8px;font-weight:700;font-size:15px;text-decoration:none;cursor:grab;border:2px dashed rgba(255,255,255,.4)" draggable="true">
+        ☀️ Sync to SolarCRM
+      </a>
+      <div style="font-size:12px;color:var(--text-sec);margin-top:8px">👆 Drag this to your bookmarks bar</div>
     </div>
 
     <div id="portal-connected-info" style="display:none;background:var(--green-bg);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--green);font-weight:600">
@@ -782,76 +779,106 @@ document.addEventListener('keydown', e => {
 <script>
 // Build bookmarklet
 function buildBookmarklet() {
-  // Token is read dynamically at click time from the CRM's localStorage
+  const crmUrl = window.location.origin;
+  const crmToken = localStorage.getItem('solarcrm_token') || '';
+  
   const code = `(function(){
-    var crmToken = null;
-    try {
-      crmToken = window.opener && window.opener.localStorage ? window.opener.localStorage.getItem('solarcrm_token') : null;
-    } catch(e){}
-    if (!crmToken) {
-      // Try reading from a known key directly
-      try { crmToken = localStorage.getItem('solarcrm_token'); } catch(e){}
-    }
-    if (!crmToken) {
-      var key = prompt('Please paste your SolarCRM token (Settings > Token in SolarCRM):');
-      if (!key) { alert('Cancelled.'); return; }
-      crmToken = key.trim();
-    }
-    var t=null;
-    // Intercept the Bearer token from outgoing fetch/XHR requests
-    var captured = false;
+    var CRM_URL = '${crmUrl}';
+    var CRM_TOKEN = '${crmToken}';
+    
+    if (!CRM_TOKEN) { alert('Please log into SolarCRM first, then try again.'); return; }
+    if (!window.location.href.includes('pmsuryaghar.gov.in')) { alert('Please run this from the PM Surya Ghar portal page.'); return; }
+    
+    // Show progress
+    var toast = document.createElement('div');
+    toast.id = 'solar-sync-toast';
+    toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#185FA5;color:#fff;padding:14px 20px;border-radius:10px;font-family:sans-serif;font-size:14px;font-weight:700;z-index:999999;box-shadow:0 8px 30px rgba(0,0,0,.3)';
+    toast.textContent = '☀️ Syncing customers...';
+    document.body.appendChild(toast);
+    
+    function updateToast(msg) { toast.textContent = msg; }
+    function removeToast() { setTimeout(function(){ if(toast.parentNode) toast.parentNode.removeChild(toast); }, 3000); }
+    
+    // Intercept XHR to get Bearer token
+    var bearerToken = null;
+    var origSet = XMLHttpRequest.prototype.setRequestHeader;
+    XMLHttpRequest.prototype.setRequestHeader = function(name, val) {
+      if (name.toLowerCase() === 'authorization' && val.indexOf('Bearer') > -1) bearerToken = val;
+      return origSet.apply(this, arguments);
+    };
     var origFetch = window.fetch;
     window.fetch = function(url, opts) {
-      if (!captured && opts && opts.headers) {
+      if (opts && opts.headers) {
         var h = opts.headers;
-        var auth = (typeof h.get === 'function') ? h.get('Authorization') : (h['Authorization'] || h['authorization'] || '');
-        if (auth && auth.includes('Bearer ')) {
-          t = auth.replace('Bearer ', '').trim();
-          captured = true;
-        }
+        var a = typeof h.get === 'function' ? h.get('Authorization') : (h['Authorization']||'');
+        if (a && a.indexOf('Bearer') > -1) bearerToken = a;
       }
       return origFetch.apply(this, arguments);
     };
-    var origXHR = XMLHttpRequest.prototype.setRequestHeader;
-    XMLHttpRequest.prototype.setRequestHeader = function(name, value) {
-      if (!captured && name.toLowerCase() === 'authorization' && value.includes('Bearer ')) {
-        t = value.replace('Bearer ', '').trim();
-        captured = true;
+    
+    // Trigger a request to capture token
+    var triggerXhr = new XMLHttpRequest();
+    triggerXhr.open('GET', '/authenticate/api/verifyAccess/vendor/api/myapplication/getMyApplicationList?pageNo=1&pageSize=1');
+    triggerXhr.onreadystatechange = function() {
+      if (this.readyState === 4) {
+        XMLHttpRequest.prototype.setRequestHeader = origSet;
+        window.fetch = origFetch;
+        if (!bearerToken) { toast.textContent = '❌ Could not get token. Try refreshing portal and clicking again.'; removeToast(); return; }
+        fetchAllAndSync(bearerToken);
       }
-      return origXHR.apply(this, arguments);
     };
-    // Trigger a request by clicking filter or navigating
-    // Wait up to 5 seconds for a request to fire
-    var waited = 0;
-    var checker = setInterval(function() {
-      waited += 500;
-      if (t) {
-        clearInterval(checker);
-        window.fetch = origFetch;
-        XMLHttpRequest.prototype.setRequestHeader = origXHR;
-        doSync(t);
-      } else if (waited >= 5000) {
-        clearInterval(checker);
-        window.fetch = origFetch;
-        XMLHttpRequest.prototype.setRequestHeader = origXHR;
-        alert('Could not capture token automatically.\n\nPlease:\n1. Click the Filter button on the portal page\n2. Then click this bookmark again');
+    triggerXhr.send();
+    
+    function fetchAllAndSync(auth) {
+      var allCustomers = [];
+      var page = 1;
+      
+      function fetchPage() {
+        updateToast('☀️ Fetching page ' + page + '...');
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/authenticate/api/verifyAccess/vendor/api/myapplication/getMyApplicationList?pageNo=' + page + '&pageSize=25');
+        xhr.setRequestHeader('Authorization', auth);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onreadystatechange = function() {
+          if (this.readyState !== 4) return;
+          if (this.status !== 200) { updateToast('❌ Error ' + this.status); removeToast(); return; }
+          try {
+            var data = JSON.parse(this.responseText);
+            var list = data.data || data.applicationList || data.content || data.list || data.records || (Array.isArray(data)?data:[]);
+            if (!list.length) { sendToSolarCRM(allCustomers); return; }
+            allCustomers = allCustomers.concat(list);
+            var total = data.totalCount || data.totalElements || data.total || 0;
+            if (allCustomers.length >= total || list.length < 25) { sendToSolarCRM(allCustomers); return; }
+            page++;
+            fetchPage();
+          } catch(e) { updateToast('❌ Parse error: ' + e.message); removeToast(); }
+        };
+        xhr.send();
       }
-    }, 500);
-    // Try to trigger a request automatically
-    try {
-      origFetch('/authenticate/api/verifyAccess/vendor/api/myapplication/getMyApplicationList?pageNo=1&pageSize=1', {
-        headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('eUT') || '') }
-      }).catch(function(){});
-    } catch(e){}
-    return; // doSync will be called by checker
-    function doSync(token) {
-      fetch('https://solarcrm-seaj.onrender.com/api/portal-token',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+crmToken},body:JSON.stringify({portalToken:token})}).then(function(r){return r.json();}).then(function(d){if(d.success){alert('✅ Connected! Syncing '+d.count+' customers to SolarCRM.');}else{alert('Error: '+(d.error||'Try again'));}}).catch(function(e){alert('Connection failed: '+e.message);});
+      
+      function sendToSolarCRM(portalCustomers) {
+        updateToast('☀️ Saving ' + portalCustomers.length + ' customers...');
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', CRM_URL + '/api/sync-portal-customers');
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('Authorization', 'Bearer ' + CRM_TOKEN);
+        xhr.onreadystatechange = function() {
+          if (this.readyState !== 4) return;
+          try {
+            var d = JSON.parse(this.responseText);
+            if (d.success) { updateToast('✅ Sync complete! ' + d.count + ' customers saved.'); }
+            else { updateToast('❌ Save failed: ' + (d.error||'Unknown')); }
+          } catch(e) { updateToast('❌ Error: ' + e.message); }
+          removeToast();
+        };
+        xhr.send(JSON.stringify({ customers: portalCustomers }));
+      }
+      
+      fetchPage();
     }
   })();`;
   return 'javascript:' + encodeURIComponent(code);
-}
-
-async function connectPortalToken() {
+} function connectPortalToken() {
   const raw = document.getElementById('portal-token-input').value.trim();
   if (!raw) { alert('Please paste the token first.'); return; }
   const portalToken = raw.startsWith('Bearer ') ? raw : 'Bearer ' + raw.trim();
@@ -963,6 +990,9 @@ async function connectPortalToken() {
 }
 
 function showPortalConnect() {
+  // Rebuild bookmarklet with current token every time
+  const link = document.getElementById('bookmarklet-link');
+  if (link) link.href = buildBookmarklet();
   openModal('portal-modal');
   // Check if already connected
   if(vendor && vendor.portal_token_updated_at) {
