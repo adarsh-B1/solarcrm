@@ -854,28 +854,102 @@ function buildBookmarklet() {
 async function connectPortalToken() {
   const raw = document.getElementById('portal-token-input').value.trim();
   if (!raw) { alert('Please paste the token first.'); return; }
-  const portalToken = raw.replace(/^Bearer\s+/i, '').trim();
-  const btn = event.target;
-  btn.disabled = true; btn.textContent = '⏳ Connecting...';
+  const portalToken = raw.startsWith('Bearer ') ? raw : 'Bearer ' + raw.trim();
+  const btn = document.querySelector('#portal-modal .btn-blue');
+  btn.disabled = true; btn.textContent = '⏳ Fetching customers...';
+
   try {
-    const res = await apiFetch('/api/portal-token', { method: 'POST', body: JSON.stringify({ portalToken }) });
-    const d = await res.json();
-    btn.disabled = false; btn.textContent = '⚡ Connect & Sync Now';
-    if (d.success) {
-      document.getElementById('portal-token-input').value = '';
-      document.getElementById('portal-connected-info').style.display = '';
-      document.getElementById('last-sync-time').textContent = new Date().toLocaleString();
-      document.getElementById('portal-status-btn').style.background = '#16A34A';
-      document.getElementById('portal-status-btn').textContent = '✅ Portal Connected';
-      closeModal('portal-modal');
-      await loadCustomers(); render(); updateDocSel(); updateMetrics();
-      showToast('☀️ Connected! ' + d.count + ' customers synced from portal!', 5000);
-    } else {
-      alert('Error: ' + (d.error || 'Invalid token. Please try again.'));
+    // Fetch ALL pages directly from browser (portal allows browser requests)
+    const allCustomers = [];
+    let page = 1;
+    let hasMore = true;
+    let total = 0;
+
+    while (hasMore) {
+      btn.textContent = `⏳ Fetching page ${page}...`;
+      const res = await fetch(
+        `https://vendor.pmsuryaghar.gov.in/authenticate/api/verifyAccess/vendor/api/myapplication/getMyApplicationList?pageNo=${page}&pageSize=25`,
+        { headers: { 'Authorization': portalToken, 'Content-Type': 'application/json' } }
+      );
+      if (!res.ok) { alert('Portal returned error ' + res.status + '. Please check your token.'); btn.disabled=false; btn.textContent='⚡ Connect & Sync Now'; return; }
+      const data = await res.json();
+      const list = data.data || data.applicationList || data.content || data.list || data.records || data.applications || [];
+      if (!list.length) { hasMore = false; break; }
+      allCustomers.push(...list);
+      total = data.totalCount || data.totalElements || data.total || data.totalRecords || allCustomers.length;
+      if (allCustomers.length >= total || list.length < 25) hasMore = false;
+      else page++;
     }
+
+    if (!allCustomers.length) {
+      // Log what we got for debugging
+      console.log('Portal returned 0 customers. Trying alternative endpoint...');
+      btn.disabled=false; btn.textContent='⚡ Connect & Sync Now';
+      alert('No customers found. The response format may have changed. Please contact support.');
+      return;
+    }
+
+    btn.textContent = `⏳ Saving ${allCustomers.length} customers...`;
+
+    // Send parsed customers to our server
+    const prefix = (vendor.company || 'SOL').slice(0,3).toUpperCase();
+    const mapped = allCustomers.map((p, idx) => {
+      const statusRaw = (p.status || p.applicationStatus || p.currentStatus || '').replace(/
+/g,' ').trim();
+      const s = statusRaw.toLowerCase();
+      const isDone = /\(disbursed\)|\(completed\)|disbursed/.test(s);
+      const isProgress = /\(in progress\)|in progress/.test(s);
+      const st = isDone ? 'done' : isProgress ? 'in-progress' : 'pending';
+      let agr='pending',fin='pending',dcr='pending',inst='pending',insp='pending',subReq='pending',subDisb='pending';
+      if(/upload agreement/.test(s))      {agr=st;}
+      else if(/^installation/.test(s))    {agr='done';fin='done';dcr=st==='done'?'done':'in-progress';inst=st;}
+      else if(/^inspection/.test(s))      {agr='done';fin='done';dcr='done';inst='done';insp=st;}
+      else if(/project commission/.test(s)){agr='done';fin='done';dcr='done';inst='done';insp='done';}
+      else if(/subsidy request/.test(s))  {agr='done';fin='done';dcr='done';inst='done';insp='done';subReq=st;}
+      else if(/subsidy disbursal/.test(s)){agr='done';fin='done';dcr='done';inst='done';insp='done';subReq='done';subDisb=st;}
+
+      // Find existing customer or create new ID
+      const consumerAcc = String(p.consumerNumber||p.consumer_number||p.caNumber||p.consumerNo||'');
+      const appNo = String(p.applicationNumber||p.application_number||p.appNo||p.applicationNo||'');
+      const existingC = customers.find(c=>(consumerAcc&&c.consumerAcc===consumerAcc)||(appNo&&c.notes&&c.notes.includes(appNo)));
+      const id = existingC ? existingC.id : prefix+'-'+String(customers.length+idx+1).padStart(3,'0');
+
+      return {
+        id, agr, fin, dcr, inst, insp, subReq, subDisb,
+        sub: subDisb, statusRaw,
+        name: (p.consumerName||p.consumer_name||p.name||'Unknown').trim(),
+        phone: String(p.mobileNumber||p.mobile||p.mobileNo||p.phone||'').replace(/\D/g,'').slice(-10),
+        kw: parseFloat(p.proposedCapacity||p.capacity||p.proposedCapacityKwp||0),
+        consumerAcc, appNo,
+        discom: p.discomName||p.discom||'',
+        submittedOn: p.submittedOn||p.applicationDate||p.createdDate||'',
+        loc: p.district||p.city||p.stateName||'',
+        sanctionedLoad: parseFloat(p.sanctionedLoad||p.sanctioned_load||0),
+        notes: [appNo?'App No: '+appNo:'', p.discomName?'Discom: '+p.discomName:''].filter(Boolean).join(' | ')
+      };
+    });
+
+    // Save to server
+    const saveRes = await apiFetch('/api/customers/sync', { method:'POST', body: JSON.stringify({ customers: mapped }) });
+    const saveData = await saveRes.json();
+
+    // Store portal token for reference
+    await apiFetch('/api/portal-token', { method:'POST', body: JSON.stringify({ portalToken: raw.trim(), count: mapped.length }) });
+
+    btn.disabled=false; btn.textContent='⚡ Connect & Sync Now';
+    document.getElementById('portal-token-input').value='';
+    document.getElementById('portal-connected-info').style.display='';
+    document.getElementById('last-sync-time').textContent=new Date().toLocaleString();
+    document.getElementById('portal-status-btn').style.background='#16A34A';
+    document.getElementById('portal-status-btn').textContent='✅ Portal Connected';
+    closeModal('portal-modal');
+    await loadCustomers(); render(); updateDocSel(); updateMetrics();
+    showToast('☀️ Synced! '+mapped.length+' customers from portal!', 5000);
+
   } catch(e) {
-    btn.disabled = false; btn.textContent = '⚡ Connect & Sync Now';
-    alert('Connection failed: ' + e.message);
+    btn.disabled=false; btn.textContent='⚡ Connect & Sync Now';
+    console.error('Sync error:', e);
+    alert('Error: ' + e.message);
   }
 }
 
