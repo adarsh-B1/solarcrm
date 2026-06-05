@@ -746,18 +746,22 @@ document.addEventListener('keydown', e => {
     <div style="background:var(--blue-light);border-radius:10px;padding:16px;margin-bottom:20px">
       <div style="font-weight:700;font-size:13px;color:var(--blue);margin-bottom:10px">📌 How to connect (one time only):</div>
       <ol style="font-size:13px;color:var(--text-sec);line-height:2;padding-left:18px">
-        <li>Drag the button below to your <strong>bookmarks bar</strong></li>
         <li>Go to <strong>vendor.pmsuryaghar.gov.in</strong> and log in</li>
-        <li>Click the <strong>"Sync to SolarCRM"</strong> bookmark</li>
-        <li>Done! Auto-sync starts immediately ✅</li>
+        <li>Press <strong>F12</strong> → click <strong>Network</strong> tab</li>
+        <li>Click any column header to sort (triggers a request)</li>
+        <li>Click the <strong>getMyApplicationList</strong> request</li>
+        <li>Click <strong>Headers</strong> → copy the <strong>Authorization</strong> value</li>
+        <li>Paste it below and click <strong>Connect</strong></li>
       </ol>
     </div>
 
-    <div style="text-align:center;margin-bottom:20px">
-      <a id="bookmarklet-link" style="display:inline-block;background:var(--blue);color:#fff;padding:12px 24px;border-radius:8px;font-weight:700;font-size:14px;text-decoration:none;cursor:move" draggable="true">
-        ☀️ Sync to SolarCRM
-      </a>
-      <div style="font-size:12px;color:var(--text-sec);margin-top:8px">👆 Drag this to your bookmarks bar</div>
+    <div style="margin-bottom:16px">
+      <label style="font-size:12px;font-weight:700;color:var(--text-sec);display:block;margin-bottom:6px;text-transform:uppercase">Paste Authorization Token</label>
+      <textarea id="portal-token-input" placeholder="Paste the Bearer token from Network tab here..." style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:'DM Mono',monospace;height:80px;outline:none;resize:none"></textarea>
+    </div>
+    <button class="btn btn-blue" style="width:100%;padding:12px;font-size:15px" onclick="connectPortalToken()">⚡ Connect & Sync Now</button>
+    <div style="margin-top:10px;text-align:center">
+      <a href="https://solarcrm-seaj.onrender.com/howto" target="_blank" style="font-size:12px;color:var(--blue)">📹 Watch how to get the token (30 seconds)</a>
     </div>
 
     <div id="portal-connected-info" style="display:none;background:var(--green-bg);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--green);font-weight:600">
@@ -847,8 +851,35 @@ function buildBookmarklet() {
   return 'javascript:' + encodeURIComponent(code);
 }
 
+async function connectPortalToken() {
+  const raw = document.getElementById('portal-token-input').value.trim();
+  if (!raw) { alert('Please paste the token first.'); return; }
+  const portalToken = raw.replace(/^Bearer\s+/i, '').trim();
+  const btn = event.target;
+  btn.disabled = true; btn.textContent = '⏳ Connecting...';
+  try {
+    const res = await apiFetch('/api/portal-token', { method: 'POST', body: JSON.stringify({ portalToken }) });
+    const d = await res.json();
+    btn.disabled = false; btn.textContent = '⚡ Connect & Sync Now';
+    if (d.success) {
+      document.getElementById('portal-token-input').value = '';
+      document.getElementById('portal-connected-info').style.display = '';
+      document.getElementById('last-sync-time').textContent = new Date().toLocaleString();
+      document.getElementById('portal-status-btn').style.background = '#16A34A';
+      document.getElementById('portal-status-btn').textContent = '✅ Portal Connected';
+      closeModal('portal-modal');
+      await loadCustomers(); render(); updateDocSel(); updateMetrics();
+      showToast('☀️ Connected! ' + d.count + ' customers synced from portal!', 5000);
+    } else {
+      alert('Error: ' + (d.error || 'Invalid token. Please try again.'));
+    }
+  } catch(e) {
+    btn.disabled = false; btn.textContent = '⚡ Connect & Sync Now';
+    alert('Connection failed: ' + e.message);
+  }
+}
+
 function showPortalConnect() {
-  document.getElementById('bookmarklet-link').href = buildBookmarklet();
   openModal('portal-modal');
   // Check if already connected
   if(vendor && vendor.portal_token_updated_at) {
