@@ -873,7 +873,10 @@ async function connectPortalToken() {
       );
       if (!res.ok) { alert('Portal returned error ' + res.status + '. Please check your token.'); btn.disabled=false; btn.textContent='⚡ Connect & Sync Now'; return; }
       const data = await res.json();
-      const list = data.data || data.applicationList || data.content || data.list || data.records || data.applications || [];
+      // Log raw response to find correct field
+      console.log('API response keys:', JSON.stringify(Object.keys(data)));
+      if (page === 1) console.log('Full response sample:', JSON.stringify(data).substring(0, 800));
+      const list = data.data || data.applicationList || data.content || data.list || data.records || data.applications || data.result || data.items || data.rows || (Array.isArray(data) ? data : []);
       if (!list.length) { hasMore = false; break; }
       allCustomers.push(...list);
       total = data.totalCount || data.totalElements || data.total || data.totalRecords || allCustomers.length;
@@ -893,39 +896,45 @@ async function connectPortalToken() {
 
     // Send parsed customers to our server
     const prefix = (vendor.company || 'SOL').slice(0,3).toUpperCase();
+    // Log first item to see field names
+    if (allCustomers.length > 0) {
+      console.log('Portal customer fields:', JSON.stringify(Object.keys(allCustomers[0])));
+      console.log('First customer:', JSON.stringify(allCustomers[0]));
+    }
+
     const mapped = allCustomers.map((p, idx) => {
-      const statusRaw = (p.status || p.applicationStatus || p.currentStatus || '').replace(/
+      // Handle all possible field name variations
+      const statusRaw = String(p.status||p.applicationStatus||p.currentStatus||p.appStatus||p.workflow_status||'').replace(/
 /g,' ').trim();
       const s = statusRaw.toLowerCase();
-      const isDone = /\(disbursed\)|\(completed\)|disbursed/.test(s);
-      const isProgress = /\(in progress\)|in progress/.test(s);
+      const isDone = /\(disbursed\)|\(completed\)|disbursed|completed/.test(s);
+      const isProgress = /\(in progress\)|in progress|processing/.test(s);
       const st = isDone ? 'done' : isProgress ? 'in-progress' : 'pending';
       let agr='pending',fin='pending',dcr='pending',inst='pending',insp='pending',subReq='pending',subDisb='pending';
-      if(/upload agreement/.test(s))      {agr=st;}
-      else if(/^installation/.test(s))    {agr='done';fin='done';dcr=st==='done'?'done':'in-progress';inst=st;}
-      else if(/^inspection/.test(s))      {agr='done';fin='done';dcr='done';inst='done';insp=st;}
+      if(/upload agreement/.test(s))       {agr=st;}
+      else if(/installation/.test(s))      {agr='done';fin='done';dcr=st==='done'?'done':'in-progress';inst=st;}
+      else if(/inspection/.test(s))        {agr='done';fin='done';dcr='done';inst='done';insp=st;}
       else if(/project commission/.test(s)){agr='done';fin='done';dcr='done';inst='done';insp='done';}
-      else if(/subsidy request/.test(s))  {agr='done';fin='done';dcr='done';inst='done';insp='done';subReq=st;}
-      else if(/subsidy disbursal/.test(s)){agr='done';fin='done';dcr='done';inst='done';insp='done';subReq='done';subDisb=st;}
+      else if(/subsidy request/.test(s))   {agr='done';fin='done';dcr='done';inst='done';insp='done';subReq=st;}
+      else if(/subsidy disbursal/.test(s)) {agr='done';fin='done';dcr='done';inst='done';insp='done';subReq='done';subDisb=st;}
+      else if(/feasibility/.test(s))       {/* all pending */}
 
-      // Find existing customer or create new ID
-      const consumerAcc = String(p.consumerNumber||p.consumer_number||p.caNumber||p.consumerNo||'');
-      const appNo = String(p.applicationNumber||p.application_number||p.appNo||p.applicationNo||'');
+      const consumerAcc = String(p.consumerNumber||p.consumer_number||p.caNumber||p.consumerNo||p.ca_number||p.accountNumber||'');
+      const appNo = String(p.applicationNumber||p.application_number||p.appNo||p.applicationNo||p.app_number||p.registrationNumber||'');
       const existingC = customers.find(c=>(consumerAcc&&c.consumerAcc===consumerAcc)||(appNo&&c.notes&&c.notes.includes(appNo)));
-      const id = existingC ? existingC.id : prefix+'-'+String(customers.length+idx+1).padStart(3,'0');
+      const id = existingC ? existingC.id : prefix+'-'+String(customers.length+1+idx).padStart(3,'0');
 
       return {
-        id, agr, fin, dcr, inst, insp, subReq, subDisb,
-        sub: subDisb, statusRaw,
-        name: (p.consumerName||p.consumer_name||p.name||'Unknown').trim(),
-        phone: String(p.mobileNumber||p.mobile||p.mobileNo||p.phone||'').replace(/\D/g,'').slice(-10),
-        kw: parseFloat(p.proposedCapacity||p.capacity||p.proposedCapacityKwp||0),
+        id, agr, fin, dcr, inst, insp, subReq, subDisb, sub: subDisb, statusRaw,
+        name: String(p.consumerName||p.consumer_name||p.applicantName||p.name||p.customerName||'Unknown').trim(),
+        phone: String(p.mobileNumber||p.mobile||p.mobileNo||p.phone||p.mobile_number||p.contactNumber||'').replace(/\D/g,'').slice(-10),
+        kw: parseFloat(p.proposedCapacity||p.capacity||p.proposedCapacityKwp||p.proposed_capacity||p.systemCapacity||0),
         consumerAcc, appNo,
-        discom: p.discomName||p.discom||'',
-        submittedOn: p.submittedOn||p.applicationDate||p.createdDate||'',
-        loc: p.district||p.city||p.stateName||'',
-        sanctionedLoad: parseFloat(p.sanctionedLoad||p.sanctioned_load||0),
-        notes: [appNo?'App No: '+appNo:'', p.discomName?'Discom: '+p.discomName:''].filter(Boolean).join(' | ')
+        discom: String(p.discomName||p.discom||p.discom_name||p.utilityName||''),
+        submittedOn: String(p.submittedOn||p.applicationDate||p.createdDate||p.submitted_on||p.registrationDate||''),
+        loc: String(p.district||p.city||p.stateName||p.state||p.location||''),
+        sanctionedLoad: parseFloat(p.sanctionedLoad||p.sanctioned_load||p.sanctionLoad||0),
+        notes: [appNo?'App No: '+appNo:'', p.discomName?'Discom: '+(p.discomName||''):''].filter(Boolean).join(' | ')
       };
     });
 
