@@ -185,25 +185,43 @@ async function fetchPortalCustomers(portalToken, vendorId) {
     let hasMore = true;
 
     while (hasMore) {
-      const response = await fetch(
-        `https://vendor.pmsuryaghar.gov.in/authenticate/api/verifyAccess/vendor/api/myapplication/getMyApplicationList?pageNo=${pageNo}&pageSize=25`,
-        {
-          headers: {
-            'Authorization': portalToken.startsWith('Bearer ') ? portalToken : 'Bearer ' + portalToken,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (!response.ok) break;
-      const data = await response.json();
+      const authHeader = portalToken.startsWith('Bearer ') ? portalToken : 'Bearer ' + portalToken;
+      const url = `https://vendor.pmsuryaghar.gov.in/authenticate/api/verifyAccess/vendor/api/myapplication/getMyApplicationList?pageNo=${pageNo}&pageSize=25`;
       
-      const list = data.data || data.applicationList || data.content || data.list || [];
+      console.log(`[Portal] Fetching page ${pageNo}: ${url}`);
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Origin': 'https://vendor.pmsuryaghar.gov.in',
+          'Referer': 'https://vendor.pmsuryaghar.gov.in/'
+        }
+      });
+
+      console.log(`[Portal] Response status: ${response.status}`);
+      
+      if (!response.ok) {
+        const errText = await response.text();
+        console.log(`[Portal] Error response: ${errText.substring(0, 200)}`);
+        break;
+      }
+      
+      const data = await response.json();
+      console.log(`[Portal] Response keys: ${JSON.stringify(Object.keys(data))}`);
+      console.log(`[Portal] Full response (first 500 chars): ${JSON.stringify(data).substring(0, 500)}`);
+      
+      const list = data.data || data.applicationList || data.content || data.list || data.records || data.applications || [];
+      console.log(`[Portal] List length: ${list.length}`);
+      
       if (!list.length) { hasMore = false; break; }
       
       allCustomers = allCustomers.concat(list);
       
-      const total = data.totalCount || data.totalElements || data.total || 0;
+      const total = data.totalCount || data.totalElements || data.total || data.totalRecords || 0;
+      console.log(`[Portal] Total: ${total}, Collected: ${allCustomers.length}`);
+      
       if (allCustomers.length >= total || list.length < 25) hasMore = false;
       else pageNo++;
     }
