@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>SolarCRM — Portal Sync</title>
+<style>
+  body { font-family: 'Segoe UI', sans-serif; background: #0C2D54; color: #fff; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; flex-direction: column; gap: 16px; }
+  .card { background: rgba(255,255,255,.1); border-radius: 12px; padding: 32px 40px; text-align: center; max-width: 500px; }
+  h2 { font-size: 20px; margin-bottom: 8px; }
+  p { color: #93C5FD; font-size: 14px; line-height: 1.6; }
+  .btn { background: #185FA5; color: #fff; border: none; padding: 14px 28px; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 16px; font-family: inherit; }
+  .btn:hover { background: #0C447C; }
+  .btn-green { background: #16A34A; }
+  .btn-green:hover { background: #15803D; }
+  #status { font-size: 13px; color: #FCD34D; margin-top: 12px; min-height: 20px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div style="font-size:48px;margin-bottom:8px">☀️</div>
+  <h2>SolarCRM Portal Sync</h2>
+  <p id="desc">This page will redirect you to PM Surya Ghar portal and sync your customers automatically.</p>
+  <button class="btn btn-green" id="main-btn" onclick="startSync()">🔗 Open PM Surya Ghar & Sync</button>
+  <div id="status"></div>
+</div>
+
+<script>
+// Get params from URL
+const params = (() => {
+  try {
+    const p = new URLSearchParams(window.location.search).get('p');
+    return p ? JSON.parse(atob(decodeURIComponent(p))) : null;
+  } catch(e) { return null; }
+})();
+
+if (!params) {
+  document.getElementById('desc').textContent = 'Invalid link. Please go back to SolarCRM and try again.';
+  document.getElementById('main-btn').style.display = 'none';
+}
+
+function startSync() {
+  const btn = document.getElementById('main-btn');
+  btn.textContent = '⏳ Opening portal...';
+  btn.disabled = true;
+
+  // Open portal in same window
+  window.location.href = 'https://vendor.pmsuryaghar.gov.in/vendor/#/signed-in/my-application';
+  
+  // After portal loads, inject sync script via interval
+  // Store params in sessionStorage for the injected script
+  sessionStorage.setItem('solar_sync_params', JSON.stringify(params));
+}
+
+// Check if we're already on the portal (redirected back)
+if (window.location.href.includes('pmsuryaghar.gov.in')) {
+  injectSyncButton();
+}
+
+function injectSyncButton() {
+  const p = JSON.parse(sessionStorage.getItem('solar_sync_params') || 'null');
+  if (!p) return;
+
+  // Wait for page to load then add sync button
+  const check = setInterval(() => {
+    if (document.querySelector('table') || document.querySelector('.my-application')) {
+      clearInterval(check);
+      addSyncButton(p);
+    }
+  }, 1000);
+  setTimeout(() => clearInterval(check), 15000);
+}
+
+function addSyncButton(p) {
+  const btn = document.createElement('button');
+  btn.textContent = '☀️ Sync to SolarCRM';
+  btn.style.cssText = 'position:fixed;top:16px;right:16px;background:#185FA5;color:#fff;padding:12px 20px;border-radius:8px;font-family:sans-serif;font-size:14px;font-weight:700;z-index:99999;border:none;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.3)';
+  btn.onclick = () => runSync(p, btn);
+  document.body.appendChild(btn);
+}
+
+function runSync(p, btn) {
+  btn.textContent = '⏳ Fetching...';
+  btn.disabled = true;
+  const all = [];
+  let page = 1;
+
+  function fetchPage() {
+    btn.textContent = '⏳ Page ' + page + '...';
+    const x = new XMLHttpRequest();
+    x.open('GET', '/authenticate/api/verifyAccess/vendor/api/myapplication/getMyApplicationList?pageNo=' + page + '&pageSize=25');
+    x.setRequestHeader('Content-Type', 'application/json');
+    x.onreadystatechange = function() {
+      if (x.readyState !== 4) return;
+      if (x.status !== 200) { btn.textContent = '❌ Error ' + x.status; return; }
+      try {
+        const d = JSON.parse(x.responseText);
+        const list = d.data || d.applicationList || d.content || d.list || d.records || (Array.isArray(d) ? d : []);
+        if (!list.length) { sendAll(); return; }
+        all.push(...list);
+        const tot = d.totalCount || d.totalElements || d.total || 0;
+        btn.textContent = '⏳ ' + all.length + (tot ? '/' + tot : '') + '...';
+        if ((tot && all.length >= tot) || list.length < 25) { sendAll(); }
+        else { page++; fetchPage(); }
+      } catch(e) { btn.textContent = '❌ ' + e.message; }
+    };
+    x.send();
+  }
+
+  function sendAll() {
+    btn.textContent = '⏳ Saving ' + all.length + '...';
+    const x = new XMLHttpRequest();
+    x.open('POST', p.crmUrl + '/api/sync-portal-customers');
+    x.setRequestHeader('Content-Type', 'application/json');
+    x.setRequestHeader('Authorization', 'Bearer ' + p.crmToken);
+    x.onreadystatechange = function() {
+      if (x.readyState !== 4) return;
+      try {
+        const d = JSON.parse(x.responseText);
+        if (d.success) {
+          btn.textContent = '✅ Done! ' + d.count + ' saved';
+          btn.style.background = '#16A34A';
+          setTimeout(() => window.close(), 3000);
+        } else {
+          btn.textContent = '❌ ' + (d.error || 'Error');
+          btn.disabled = false;
+        }
+      } catch(e) { btn.textContent = '❌ ' + e.message; btn.disabled = false; }
+    };
+    x.send(JSON.stringify({ customers: all }));
+  }
+
+  fetchPage();
+}
+</script>
+</body>
+</html>
