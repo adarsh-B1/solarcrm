@@ -744,20 +744,20 @@ document.addEventListener('keydown', e => {
     </p>
     
     <div style="background:var(--blue-light);border-radius:10px;padding:16px;margin-bottom:16px">
-      <div style="font-weight:700;font-size:13px;color:var(--blue);margin-bottom:10px">📌 How to sync (3 simple steps):</div>
+      <div style="font-weight:700;font-size:13px;color:var(--blue);margin-bottom:10px">📌 How to sync (2 simple steps):</div>
       <ol style="font-size:13px;color:var(--text-sec);line-height:2;padding-left:18px">
-        <li>Go to <strong>vendor.pmsuryaghar.gov.in</strong> → log in → open <strong>My Application</strong></li>
-        <li>Press <strong>F12</strong> → click <strong>Console</strong> tab → type <code style="background:#fff;padding:1px 4px;border-radius:3px">allow pasting</code> → Enter</li>
-        <li>Copy the code below → paste in console → press Enter</li>
+        <li>Click <strong>"Open Portal & Sync"</strong> below</li>
+        <li>Log into PM Surya Ghar in the new tab that opens — sync starts automatically ✅</li>
       </ol>
     </div>
 
-    <div style="margin-bottom:12px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <label style="font-size:12px;font-weight:700;color:var(--text-sec);text-transform:uppercase">Copy this code</label>
-        <button class="btn btn-outline" style="padding:4px 10px;font-size:12px" onclick="copyScript()">📋 Copy</button>
-      </div>
-      <div id="script-box" style="background:#0F172A;color:#7DD3FC;padding:12px;border-radius:8px;font-family:'DM Mono',monospace;font-size:11px;overflow-x:auto;white-space:nowrap;cursor:pointer" onclick="copyScript()">Loading...</div>
+    <button class="btn btn-blue" style="width:100%;padding:14px;font-size:15px;margin-bottom:12px" onclick="openPortalSync()">
+      ☀️ Open Portal &amp; Sync
+    </button>
+
+    <div style="background:#FEF3C7;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#92400E">
+      <strong>What happens:</strong> A PM Surya Ghar tab opens. Log in normally. 
+      Once logged in, click the <strong>"Sync to SolarCRM"</strong> button that appears on the page.
     </div>
 
     <div id="portal-connected-info" style="display:none;background:var(--green-bg);border-radius:8px;padding:12px;font-size:13px;color:var(--green);font-weight:600">
@@ -894,6 +894,19 @@ unction connectPortalToken() {
 
 function buildSyncScript(crmUrl, crmToken) {
   return `(function(){var C='${crmUrl}',T='${crmToken}';if(!T){alert('Log into SolarCRM first');return;}var t=document.createElement('div');t.style='position:fixed;top:16px;right:16px;background:#185FA5;color:#fff;padding:12px 18px;border-radius:8px;font-family:sans-serif;font-size:13px;font-weight:700;z-index:99999';t.textContent='\u2600\uFE0F Fetching...';document.body.appendChild(t);var all=[],p=1;function fetch_page(){var x=new XMLHttpRequest();x.open('GET','/authenticate/api/verifyAccess/vendor/api/myapplication/getMyApplicationList?pageNo='+p+'&pageSize=25');x.setRequestHeader('Content-Type','application/json');x.onreadystatechange=function(){if(x.readyState!==4)return;if(x.status!==200){t.textContent='Error '+x.status;return;}var d=JSON.parse(x.responseText);var list=d.data||d.applicationList||d.content||d.list||d.records||(Array.isArray(d)?d:[]);if(!list.length){send_all();return;}all=all.concat(list);var tot=d.totalCount||d.totalElements||d.total||0;t.textContent='\u2600\uFE0F Fetched '+all.length+(tot?' of '+tot:'');if(all.length>=tot&&tot>0||list.length<25){send_all();}else{p++;fetch_page();}};x.send();}function send_all(){t.textContent='\u2600\uFE0F Saving '+all.length+'...';var x=new XMLHttpRequest();x.open('POST',C+'/api/sync-portal-customers');x.setRequestHeader('Content-Type','application/json');x.setRequestHeader('Authorization','Bearer '+T);x.onreadystatechange=function(){if(x.readyState!==4)return;try{var d=JSON.parse(x.responseText);t.textContent=d.success?'\u2705 Done! '+d.count+' customers saved.':'\u274C '+(d.error||'Error');setTimeout(function(){t.parentNode&&t.parentNode.removeChild(t);},4000);}catch(e){t.textContent='\u274C '+e.message;}};x.send(JSON.stringify({customers:all}));}fetch_page();})()`;
+}
+
+function openPortalSync() {
+  const crmUrl = window.location.origin;
+  const crmToken = localStorage.getItem('solarcrm_token') || '';
+  if (!crmToken) { alert('Please log in first.'); return; }
+  // Encode params
+  const params = btoa(JSON.stringify({ crmUrl, crmToken }));
+  // Open portal with relay page
+  const relayUrl = crmUrl + '/portal-relay.html?p=' + encodeURIComponent(params);
+  window.open(relayUrl, '_blank', 'width=1200,height=800');
+  closeModal('portal-modal');
+  showToast('Portal opened! Log in and click "Sync to SolarCRM".', 5000);
 }
 
 function copyScript() {
