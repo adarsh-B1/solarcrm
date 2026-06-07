@@ -340,8 +340,7 @@ app.post('/api/sync-portal-customers', auth, async (req, res) => {
     let counter = existingList.length;
 
     const rows = portalCustomers.map(p => {
-      const statusRaw = String(p.status || p.applicationStatus || p.currentStatus || p.appStatus || '').replace(/
-/g, ' ').trim();
+      const statusRaw = String(p.status || p.applicationStatus || p.currentStatus || p.appStatus || '').replace(/\n/g, ' ').trim();
       const s = statusRaw.toLowerCase();
       const isDone = /\(disbursed\)|\(completed\)|disbursed|completed/.test(s);
       const isProgress = /\(in progress\)|in progress/.test(s);
