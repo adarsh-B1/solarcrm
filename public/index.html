@@ -737,31 +737,49 @@ document.addEventListener('keydown', e => {
 
 <!-- Portal Connect Modal -->
 <div class="modal-overlay" id="portal-modal">
-  <div class="modal" style="max-width:500px">
-    <div class="modal-title">☀️ Connect PM Surya Ghar Portal</div>
-    <p style="color:var(--text-sec);margin-bottom:20px;font-size:14px;line-height:1.6">
-      Connect once — SolarCRM will automatically sync all your customers from the portal every 5 minutes. <strong>No extension needed.</strong>
-    </p>
+  <div class="modal" style="max-width:540px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <div style="font-size:28px">☀️</div>
+      <div>
+        <div class="modal-title" style="margin-bottom:0">Sync PM Surya Ghar Customers</div>
+        <div style="font-size:13px;color:var(--text-sec)">One-time setup • Works in any browser • No extension needed</div>
+      </div>
+    </div>
+    <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
     
-    <div style="background:var(--blue-light);border-radius:10px;padding:16px;margin-bottom:16px">
-      <div style="font-weight:700;font-size:13px;color:var(--blue);margin-bottom:10px">📌 How to sync (2 simple steps):</div>
-      <ol style="font-size:13px;color:var(--text-sec);line-height:2;padding-left:18px">
-        <li>Click <strong>"Open Portal & Sync"</strong> below</li>
-        <li>Log into PM Surya Ghar in the new tab that opens — sync starts automatically ✅</li>
-      </ol>
+    <!-- Step indicators -->
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <div style="flex:1;background:var(--blue);color:#fff;border-radius:8px;padding:10px;text-align:center;font-size:12px;font-weight:700">
+        <div style="font-size:20px;margin-bottom:4px">1️⃣</div>
+        Copy script below
+      </div>
+      <div style="flex:1;background:#E2E8F0;color:#64748B;border-radius:8px;padding:10px;text-align:center;font-size:12px;font-weight:700">
+        <div style="font-size:20px;margin-bottom:4px">2️⃣</div>
+        Open portal, F12 → Console
+      </div>
+      <div style="flex:1;background:#E2E8F0;color:#64748B;border-radius:8px;padding:10px;text-align:center;font-size:12px;font-weight:700">
+        <div style="font-size:20px;margin-bottom:4px">3️⃣</div>
+        Type "allow pasting" → paste → Enter
+      </div>
     </div>
 
-    <button class="btn btn-blue" style="width:100%;padding:14px;font-size:15px;margin-bottom:12px" onclick="openPortalSync()">
-      ☀️ Open Portal &amp; Sync
-    </button>
-
-    <div style="background:#FEF3C7;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#92400E">
-      <strong>What happens:</strong> A PM Surya Ghar tab opens. Log in normally. 
-      Once logged in, click the <strong>"Sync to SolarCRM"</strong> button that appears on the page.
+    <!-- Script box -->
+    <div style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <label style="font-size:12px;font-weight:700;color:var(--text-sec);text-transform:uppercase">Your Sync Script</label>
+        <button class="btn btn-blue" style="padding:6px 14px;font-size:12px" id="copy-btn" onclick="copyScript()">📋 Copy Script</button>
+      </div>
+      <div id="script-box" style="background:#0F172A;color:#7DD3FC;padding:12px;border-radius:8px;font-family:'DM Mono',monospace;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;border:2px solid transparent" onclick="copyScript()">Loading...</div>
+      <div style="font-size:11px;color:var(--text-sec);margin-top:4px">👆 Click to copy</div>
     </div>
+
+    <!-- Quick link -->
+    <a href="https://vendor.pmsuryaghar.gov.in/vendor/#/signed-in/my-application" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:12px;display:flex">
+      🌐 Open PM Surya Ghar Portal
+    </a>
 
     <div id="portal-connected-info" style="display:none;background:var(--green-bg);border-radius:8px;padding:12px;font-size:13px;color:var(--green);font-weight:600">
-      ✅ Portal connected! Last sync: <span id="last-sync-time">Never</span>
+      ✅ Portal synced! Last sync: <span id="last-sync-time">Never</span>
     </div>
 
     <div id="portal-connected-info" style="display:none;background:var(--green-bg);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--green);font-weight:600">
@@ -911,7 +929,28 @@ function openPortalSync() {
 
 function copyScript() {
   const script = document.getElementById('script-box').textContent;
-  navigator.clipboard.writeText(script).then(() => showToast('Code copied! Paste it in the portal console.', 3000));
+  if (script === 'Loading...') { showToast('Please wait...', 1000); return; }
+  navigator.clipboard.writeText(script).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✅ Copied!';
+    btn.style.background = '#16A34A';
+    document.getElementById('script-box').style.borderColor = '#16A34A';
+    setTimeout(() => {
+      btn.textContent = '📋 Copy Script';
+      btn.style.background = '';
+      document.getElementById('script-box').style.borderColor = 'transparent';
+    }, 3000);
+    showToast('✅ Script copied! Now paste it in the portal console.', 4000);
+  }).catch(() => {
+    // Fallback for browsers that block clipboard
+    const ta = document.createElement('textarea');
+    ta.value = script;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('✅ Script copied!', 3000);
+  });
 }
 
 function showPortalConnect() {
