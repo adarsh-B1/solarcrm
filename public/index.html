@@ -798,190 +798,60 @@ document.addEventListener('keydown', e => {
 </div>
 
 <script>
-function connectPortalToken() {
-  const raw = document.getElementById('portal-token-input').value.trim();
-  if (!raw) { alert('Please paste the token first.'); return; }
-  const portalToken = raw.startsWith('Bearer ') ? raw : 'Bearer ' + raw.trim();
-  const btn = document.querySelector('#portal-modal .btn-blue');
-  btn.disabled = true; btn.textContent = '⏳ Fetching customers...';
-
-  try {
-    // Fetch ALL pages directly from browser (portal allows browser requests)
-    const allCustomers = [];
-    let page = 1;
-    let hasMore = true;
-    let total = 0;
-
-    while (hasMore) {
-      btn.textContent = `⏳ Fetching page ${page}...`;
-      const res = await fetch(
-        `https://vendor.pmsuryaghar.gov.in/authenticate/api/verifyAccess/vendor/api/myapplication/getMyApplicationList?pageNo=${page}&pageSize=25`,
-        { headers: { 'Authorization': portalToken, 'Content-Type': 'application/json' } }
-      );
-      if (!res.ok) { alert('Portal returned error ' + res.status + '. Please check your token.'); btn.disabled=false; btn.textContent='⚡ Connect & Sync Now'; return; }
-      const data = await res.json();
-      // Log raw response to find correct field
-      console.log('API response keys:', JSON.stringify(Object.keys(data)));
-      if (page === 1) console.log('Full response sample:', JSON.stringify(data).substring(0, 800));
-      const list = data.data || data.applicationList || data.content || data.list || data.records || data.applications || data.result || data.items || data.rows || (Array.isArray(data) ? data : []);
-      if (!list.length) { hasMore = false; break; }
-      allCustomers.push(...list);
-      total = data.totalCount || data.totalElements || data.total || data.totalRecords || allCustomers.length;
-      if (allCustomers.length >= total || list.length < 25) hasMore = false;
-      else page++;
-    }
-
-    if (!allCustomers.length) {
-      // Log what we got for debugging
-      console.log('Portal returned 0 customers. Trying alternative endpoint...');
-      btn.disabled=false; btn.textContent='⚡ Connect & Sync Now';
-      alert('No customers found. The response format may have changed. Please contact support.');
-      return;
-    }
-
-    btn.textContent = `⏳ Saving ${allCustomers.length} customers...`;
-
-    // Send parsed customers to our server
-    const prefix = (vendor.company || 'SOL').slice(0,3).toUpperCase();
-    // Log first item to see field names
-    if (allCustomers.length > 0) {
-      console.log('Portal customer fields:', JSON.stringify(Object.keys(allCustomers[0])));
-      console.log('First customer:', JSON.stringify(allCustomers[0]));
-    }
-
-    const mapped = allCustomers.map((p, idx) => {
-      // Handle all possible field name variations
-      const statusRaw = String(p.status||p.applicationStatus||p.currentStatus||p.appStatus||p.workflow_status||'').replace(/
-/g,' ').trim();
-      const s = statusRaw.toLowerCase();
-      const isDone = /\(disbursed\)|\(completed\)|disbursed|completed/.test(s);
-      const isProgress = /\(in progress\)|in progress|processing/.test(s);
-      const st = isDone ? 'done' : isProgress ? 'in-progress' : 'pending';
-      let agr='pending',fin='pending',dcr='pending',inst='pending',insp='pending',subReq='pending',subDisb='pending';
-      if(/upload agreement/.test(s))       {agr=st;}
-      else if(/installation/.test(s))      {agr='done';fin='done';dcr=st==='done'?'done':'in-progress';inst=st;}
-      else if(/inspection/.test(s))        {agr='done';fin='done';dcr='done';inst='done';insp=st;}
-      else if(/project commission/.test(s)){agr='done';fin='done';dcr='done';inst='done';insp='done';}
-      else if(/subsidy request/.test(s))   {agr='done';fin='done';dcr='done';inst='done';insp='done';subReq=st;}
-      else if(/subsidy disbursal/.test(s)) {agr='done';fin='done';dcr='done';inst='done';insp='done';subReq='done';subDisb=st;}
-      else if(/feasibility/.test(s))       {/* all pending */}
-
-      const consumerAcc = String(p.consumerNumber||p.consumer_number||p.caNumber||p.consumerNo||p.ca_number||p.accountNumber||'');
-      const appNo = String(p.applicationNumber||p.application_number||p.appNo||p.applicationNo||p.app_number||p.registrationNumber||'');
-      const existingC = customers.find(c=>(consumerAcc&&c.consumerAcc===consumerAcc)||(appNo&&c.notes&&c.notes.includes(appNo)));
-      const id = existingC ? existingC.id : prefix+'-'+String(customers.length+1+idx).padStart(3,'0');
-
-      return {
-        id, agr, fin, dcr, inst, insp, subReq, subDisb, sub: subDisb, statusRaw,
-        name: String(p.consumerName||p.consumer_name||p.applicantName||p.name||p.customerName||'Unknown').trim(),
-        phone: String(p.mobileNumber||p.mobile||p.mobileNo||p.phone||p.mobile_number||p.contactNumber||'').replace(/\D/g,'').slice(-10),
-        kw: parseFloat(p.proposedCapacity||p.capacity||p.proposedCapacityKwp||p.proposed_capacity||p.systemCapacity||0),
-        consumerAcc, appNo,
-        discom: String(p.discomName||p.discom||p.discom_name||p.utilityName||''),
-        submittedOn: String(p.submittedOn||p.applicationDate||p.createdDate||p.submitted_on||p.registrationDate||''),
-        loc: String(p.district||p.city||p.stateName||p.state||p.location||''),
-        sanctionedLoad: parseFloat(p.sanctionedLoad||p.sanctioned_load||p.sanctionLoad||0),
-        notes: [appNo?'App No: '+appNo:'', p.discomName?'Discom: '+(p.discomName||''):''].filter(Boolean).join(' | ')
-      };
-    });
-
-    // Save to server
-    const saveRes = await apiFetch('/api/customers/sync', { method:'POST', body: JSON.stringify({ customers: mapped }) });
-    const saveData = await saveRes.json();
-
-    // Store portal token for reference
-    await apiFetch('/api/portal-token', { method:'POST', body: JSON.stringify({ portalToken: raw.trim(), count: mapped.length }) });
-
-    btn.disabled=false; btn.textContent='⚡ Connect & Sync Now';
-    document.getElementById('portal-token-input').value='';
-    document.getElementById('portal-connected-info').style.display='';
-    document.getElementById('last-sync-time').textContent=new Date().toLocaleString();
-    document.getElementById('portal-status-btn').style.background='#16A34A';
-    document.getElementById('portal-status-btn').textContent='✅ Portal Connected';
-    closeModal('portal-modal');
-    await loadCustomers(); render(); updateDocSel(); updateMetrics();
-    showToast('☀️ Synced! '+mapped.length+' customers from portal!', 5000);
-
-  } catch(e) {
-    btn.disabled=false; btn.textContent='⚡ Connect & Sync Now';
-    console.error('Sync error:', e);
-    alert('Error: ' + e.message);
-  }
-}
-
 function buildSyncScript(crmUrl, crmToken) {
-  return `(function(){var C='${crmUrl}',T='${crmToken}';if(!T){alert('Log into SolarCRM first');return;}var t=document.createElement('div');t.style='position:fixed;top:16px;right:16px;background:#185FA5;color:#fff;padding:12px 18px;border-radius:8px;font-family:sans-serif;font-size:13px;font-weight:700;z-index:99999';t.textContent='\u2600\uFE0F Fetching...';document.body.appendChild(t);var all=[],p=1;function fetch_page(){var x=new XMLHttpRequest();x.open('GET','/authenticate/api/verifyAccess/vendor/api/myapplication/getMyApplicationList?pageNo='+p+'&pageSize=25');x.setRequestHeader('Content-Type','application/json');x.onreadystatechange=function(){if(x.readyState!==4)return;if(x.status!==200){t.textContent='Error '+x.status;return;}var d=JSON.parse(x.responseText);var list=d.data||d.applicationList||d.content||d.list||d.records||(Array.isArray(d)?d:[]);if(!list.length){send_all();return;}all=all.concat(list);var tot=d.totalCount||d.totalElements||d.total||0;t.textContent='\u2600\uFE0F Fetched '+all.length+(tot?' of '+tot:'');if(all.length>=tot&&tot>0||list.length<25){send_all();}else{p++;fetch_page();}};x.send();}function send_all(){t.textContent='\u2600\uFE0F Saving '+all.length+'...';var x=new XMLHttpRequest();x.open('POST',C+'/api/sync-portal-customers');x.setRequestHeader('Content-Type','application/json');x.setRequestHeader('Authorization','Bearer '+T);x.onreadystatechange=function(){if(x.readyState!==4)return;try{var d=JSON.parse(x.responseText);t.textContent=d.success?'\u2705 Done! '+d.count+' customers saved.':'\u274C '+(d.error||'Error');setTimeout(function(){t.parentNode&&t.parentNode.removeChild(t);},4000);}catch(e){t.textContent='\u274C '+e.message;}};x.send(JSON.stringify({customers:all}));}fetch_page();})()`;
-}
-
-function openPortalSync() {
-  const crmUrl = window.location.origin;
-  const crmToken = localStorage.getItem('solarcrm_token') || '';
-  if (!crmToken) { alert('Please log in first.'); return; }
-  // Encode params
-  const params = btoa(JSON.stringify({ crmUrl, crmToken }));
-  // Open portal with relay page
-  const relayUrl = crmUrl + '/portal-relay.html?p=' + encodeURIComponent(params);
-  window.open(relayUrl, '_blank', 'width=1200,height=800');
-  closeModal('portal-modal');
-  showToast('Portal opened! Log in and click "Sync to SolarCRM".', 5000);
-}
-
-function copyScript() {
-  const script = document.getElementById('script-box').textContent;
-  if (script === 'Loading...') { showToast('Please wait...', 1000); return; }
-  navigator.clipboard.writeText(script).then(() => {
-    const btn = document.getElementById('copy-btn');
-    btn.textContent = '✅ Copied!';
-    btn.style.background = '#16A34A';
-    document.getElementById('script-box').style.borderColor = '#16A34A';
-    setTimeout(() => {
-      btn.textContent = '📋 Copy Script';
-      btn.style.background = '';
-      document.getElementById('script-box').style.borderColor = 'transparent';
-    }, 3000);
-    showToast('✅ Script copied! Now paste it in the portal console.', 4000);
-  }).catch(() => {
-    // Fallback for browsers that block clipboard
-    const ta = document.createElement('textarea');
-    ta.value = script;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    showToast('✅ Script copied!', 3000);
-  });
+  return `(function(){var C='${crmUrl}',T='${crmToken}';if(!T){alert('Log into SolarCRM first');return;}var t=document.createElement('div');t.style='position:fixed;top:16px;right:16px;background:#185FA5;color:#fff;padding:12px 18px;border-radius:8px;font-family:sans-serif;font-size:13px;font-weight:700;z-index:99999';t.textContent='\u2600\uFE0F Fetching...';document.body.appendChild(t);var all=[],p=1;function fetch_page(){var x=new XMLHttpRequest();x.open('GET','/authenticate/api/verifyAccess/vendor/api/myapplication/getMyApplicationList?pageNo='+p+'&pageSize=25');x.setRequestHeader('Content-Type','application/json');x.onreadystatechange=function(){if(x.readyState!==4)return;if(x.status!==200){t.textContent='Error '+x.status;return;}var d=JSON.parse(x.responseText);var list=d.data||d.applicationList||d.content||d.list||d.records||(Array.isArray(d)?d:[]);if(!list.length){send_all();return;}all=all.concat(list);var tot=d.totalCount||d.totalElements||d.total||0;t.textContent='\u2600\uFE0F Fetched '+all.length+(tot?' of '+tot:'');if((tot>0&&all.length>=tot)||list.length<25){send_all();}else{p++;fetch_page();}};x.send();}function send_all(){t.textContent='\u2600\uFE0F Saving '+all.length+'...';var x=new XMLHttpRequest();x.open('POST',C+'/api/sync-portal-customers');x.setRequestHeader('Content-Type','application/json');x.setRequestHeader('Authorization','Bearer '+T);x.onreadystatechange=function(){if(x.readyState!==4)return;try{var d=JSON.parse(x.responseText);t.textContent=d.success?'\u2705 Done! '+d.count+' customers saved.':'\u274C '+(d.error||'Error');setTimeout(function(){t.parentNode&&t.parentNode.removeChild(t);},4000);}catch(e){t.textContent='\u274C '+e.message;}};x.send(JSON.stringify({customers:all}));}fetch_page();})()`;
 }
 
 function showPortalConnect() {
-  // Build script with current token
   const crmUrl = window.location.origin;
   const crmToken = localStorage.getItem('solarcrm_token') || '';
   const script = buildSyncScript(crmUrl, crmToken);
   const box = document.getElementById('script-box');
   if (box) box.textContent = script;
   openModal('portal-modal');
-  // Check if already connected
-  if(vendor && vendor.portal_token_updated_at) {
-    document.getElementById('portal-connected-info').style.display='';
-    document.getElementById('last-sync-time').textContent = new Date(vendor.portal_token_updated_at).toLocaleString();
-    document.getElementById('portal-status-btn').style.background='#16A34A';
-    document.getElementById('portal-status-btn').style.borderColor='#16A34A';
-    document.getElementById('portal-status-btn').textContent='✅ Portal Connected';
-  }
 }
 
-// Poll for new customers every 30 seconds (server syncs every 5 min)
+function copyScript() {
+  const script = document.getElementById('script-box').textContent;
+  if (script === 'Loading...') { showToast('Please wait...', 1000); return; }
+  const copy = (text) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(onCopied).catch(fallback);
+    } else { fallback(); }
+  };
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = script; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta); onCopied();
+  };
+  const onCopied = () => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✅ Copied!'; btn.style.background = '#16A34A';
+    document.getElementById('script-box').style.borderColor = '#16A34A';
+    setTimeout(() => { btn.textContent = '📋 Copy Script'; btn.style.background = ''; document.getElementById('script-box').style.borderColor = 'transparent'; }, 3000);
+    showToast('✅ Script copied! Paste it in the portal console.', 4000);
+  };
+  copy(script);
+}
+
+function copyMyToken() {
+  const t = localStorage.getItem('solarcrm_token');
+  if (!t) return;
+  navigator.clipboard.writeText(t).then(() => showToast('Token copied!', 3000));
+}
+
+// Poll for new customers every 30 seconds
 setInterval(async function() {
-  if(!token) return;
+  if (!token) return;
   try {
     const res = await apiFetch('/api/customers');
-    if(!res.ok) return;
+    if (!res.ok) return;
     const raw = await res.json();
     const newCustomers = raw.map(dbToLocal);
-    if(newCustomers.length !== customers.length) {
+    if (newCustomers.length !== customers.length) {
       customers = newCustomers;
       render(); updateDocSel(); updateMetrics();
-      showToast('☀️ ' + customers.length + ' customers synced from portal!', 4000);
+      showToast('☀️ ' + customers.length + ' customers synced!', 4000);
     }
   } catch(e) {}
 }, 30000);
