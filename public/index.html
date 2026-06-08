@@ -798,8 +798,7 @@ document.addEventListener('keydown', e => {
 </div>
 
 <script>
-// Build bookmarklet
-unction connectPortalToken() {
+function connectPortalToken() {
   const raw = document.getElementById('portal-token-input').value.trim();
   if (!raw) { alert('Please paste the token first.'); return; }
   const portalToken = raw.startsWith('Bearer ') ? raw : 'Bearer ' + raw.trim();
