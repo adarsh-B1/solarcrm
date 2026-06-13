@@ -4,256 +4,132 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SolarCRM — PM Surya Ghar Management</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-:root {
-  --blue:#185FA5;--blue-dark:#0C447C;--blue-light:#EFF6FF;--blue-mid:#DBEAFE;
-  --green:#16A34A;--green-bg:#DCFCE7;--red:#DC2626;--red-bg:#FEE2E2;
-  --amber:#D97706;--amber-bg:#FEF3C7;
-  --border:#E2E8F0;--text:#0F172A;--text-sec:#64748B;--text-light:#94A3B8;
-  --bg:#F8FAFC;--white:#fff;
-  --radius:10px;--shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.04);
-  --shadow-lg:0 10px 40px rgba(0,0,0,.12);
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
-button{font-family:'DM Sans',sans-serif;cursor:pointer;border:none}
-input,select,textarea{font-family:'DM Sans',sans-serif}
-
-/* ── Auth Pages ── */
-.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0C2D54 0%,#185FA5 60%,#1E78C8 100%);padding:20px}
+:root{--blue:#185FA5;--blue-dark:#0C447C;--blue-light:#EFF6FF;--green:#16A34A;--green-bg:#DCFCE7;--red:#DC2626;--red-bg:#FEE2E2;--amber:#D97706;--amber-bg:#FEF3C7;--border:#E2E8F0;--text:#0F172A;--text-sec:#64748B;--text-light:#94A3B8;--bg:#F8FAFC;--radius:10px;--shadow:0 1px 3px rgba(0,0,0,.08);--shadow-lg:0 10px 40px rgba(0,0,0,.12)}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px}button{font-family:'DM Sans',sans-serif;cursor:pointer;border:none}input,select,textarea{font-family:'DM Sans',sans-serif}
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0C2D54,#185FA5,#1E78C8);padding:20px}
 .auth-card{background:#fff;border-radius:16px;padding:40px;width:100%;max-width:440px;box-shadow:var(--shadow-lg)}
-.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
-.auth-logo-icon{font-size:32px}
-.auth-logo-text{font-size:22px;font-weight:800;color:var(--blue)}
-.auth-logo-sub{font-size:12px;color:var(--text-sec);font-weight:500}
-.auth-title{font-size:20px;font-weight:800;margin-bottom:6px}
-.auth-sub{font-size:13px;color:var(--text-sec);margin-bottom:24px}
-.field{margin-bottom:16px}
-.field label{display:block;font-size:12px;font-weight:700;color:var(--text-sec);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
-.field input{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;color:var(--text);outline:none;transition:border-color .15s}
-.field input:focus{border-color:var(--blue)}
-.btn-primary{width:100%;background:var(--blue);color:#fff;padding:12px;border-radius:8px;font-size:15px;font-weight:700;transition:background .15s}
-.btn-primary:hover{background:var(--blue-dark)}
-.btn-primary:disabled{opacity:.5;cursor:default}
-.auth-switch{text-align:center;margin-top:16px;font-size:13px;color:var(--text-sec)}
-.auth-switch a{color:var(--blue);font-weight:600;cursor:pointer;text-decoration:none}
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}.auth-logo-icon{font-size:32px}.auth-logo-text{font-size:22px;font-weight:800;color:var(--blue)}.auth-logo-sub{font-size:12px;color:var(--text-sec)}
+.auth-title{font-size:20px;font-weight:800;margin-bottom:6px}.auth-sub{font-size:13px;color:var(--text-sec);margin-bottom:24px}
+.field{margin-bottom:16px}.field label{display:block;font-size:12px;font-weight:700;color:var(--text-sec);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;color:var(--text);outline:none;transition:border-color .15s;background:#fff}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue)}
+.btn-primary{width:100%;background:var(--blue);color:#fff;padding:12px;border-radius:8px;font-size:15px;font-weight:700}.btn-primary:hover{background:var(--blue-dark)}.btn-primary:disabled{opacity:.5;cursor:default}
+.auth-switch{text-align:center;margin-top:16px;font-size:13px;color:var(--text-sec)}.auth-switch a{color:var(--blue);font-weight:600;cursor:pointer}
 .auth-error{background:var(--red-bg);color:var(--red);padding:10px 12px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:16px;display:none}
 .trial-badge{background:var(--green-bg);color:var(--green);border-radius:8px;padding:10px 12px;font-size:13px;font-weight:600;margin-bottom:20px;text-align:center}
-
-/* ── App Layout ── */
 #app{display:none}
 .topbar{background:linear-gradient(135deg,#0C2D54,#185FA5);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
-.topbar-left{display:flex;align-items:center;gap:12px}
-.topbar-logo{font-size:18px;font-weight:800;color:#fff}
-.topbar-company{font-size:13px;color:#93C5FD;font-weight:500}
-.plan-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;background:rgba(255,255,255,.15);color:#fff}
-.plan-badge.pro{background:#16A34A}
-.plan-badge.trial{background:#D97706}
-.plan-badge.expired{background:#DC2626}
-.topbar-right{display:flex;align-items:center;gap:10px}
-.topbar-btn{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);padding:6px 14px;border-radius:6px;font-size:13px;font-weight:600;transition:background .15s}
-.topbar-btn:hover{background:rgba(255,255,255,.2)}
-
+.topbar-left{display:flex;align-items:center;gap:12px}.topbar-logo{font-size:18px;font-weight:800;color:#fff}.topbar-company{font-size:13px;color:#93C5FD;font-weight:500}
+.plan-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px;background:rgba(255,255,255,.15);color:#fff}.plan-badge.pro{background:#16A34A}.plan-badge.trial{background:#D97706}.plan-badge.expired{background:#DC2626}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.topbar-btn{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.2);padding:6px 14px;border-radius:6px;font-size:13px;font-weight:600}.topbar-btn:hover{background:rgba(255,255,255,.2)}
 .main{max-width:1400px;margin:0 auto;padding:20px 16px}
-
-/* ── Metrics ── */
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
 .metric{background:#fff;border-radius:var(--radius);padding:16px 20px;border:1px solid var(--border);box-shadow:var(--shadow)}
 .metric-label{font-size:11px;font-weight:700;color:var(--text-sec);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
-.metric-value{font-size:28px;font-weight:800;color:var(--text)}
-.metric-value.a{color:var(--amber)}
-.metric-value.g{color:var(--green)}
-.metric-value.b{color:var(--blue)}
-
-/* ── Tabs ── */
+.metric-value{font-size:28px;font-weight:800}.metric-value.a{color:var(--amber)}.metric-value.g{color:var(--green)}.metric-value.b{color:var(--blue)}
 .tabs{display:flex;gap:2px;margin-bottom:16px;background:#E2E8F0;padding:3px;border-radius:8px;width:fit-content}
-.tab{padding:7px 18px;border-radius:6px;font-size:13px;font-weight:600;color:var(--text-sec);cursor:pointer;transition:all .15s}
-.tab.active{background:#fff;color:var(--blue);box-shadow:var(--shadow)}
-
-/* ── Toolbar ── */
+.tab{padding:7px 18px;border-radius:6px;font-size:13px;font-weight:600;color:var(--text-sec);cursor:pointer;transition:all .15s}.tab.active{background:#fff;color:var(--blue);box-shadow:var(--shadow)}
 .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-.search-input{flex:1;min-width:200px;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none}
-.search-input:focus{border-color:var(--blue)}
-select.filter{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:#fff;color:var(--text)}
-.btn{padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
+.search-input{flex:1;min-width:200px;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none}.search-input:focus{border-color:var(--blue)}
+select.filter{padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:#fff}
+.btn{padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
 .btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{background:var(--blue-dark)}
-.btn-green{background:var(--green);color:#fff}.btn-green:hover{background:#15803D}
 .btn-red{background:#FEE2E2;color:#991B1B;border:1.5px solid #FCA5A5}.btn-red:hover{background:#FECACA}
 .btn-outline{background:#fff;color:var(--blue);border:1.5px solid var(--blue)}.btn-outline:hover{background:var(--blue-light)}
-
-/* ── Table ── */
 .table-wrap{background:#fff;border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);overflow-x:auto}
-table{width:100%;border-collapse:collapse}
-th{padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text-sec);text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid var(--border);white-space:nowrap;background:var(--bg)}
-td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:var(--blue-light)}
-
-/* ── Badges ── */
+table{width:100%;border-collapse:collapse}th{padding:10px 12px;text-align:left;font-size:11px;font-weight:700;color:var(--text-sec);text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid var(--border);white-space:nowrap;background:var(--bg)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}tr:last-child td{border-bottom:none}tr:hover td{background:var(--blue-light)}
 .badge{display:inline-block;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
-.badge-done{background:#DCFCE7;color:#166534}
-.badge-pending{background:#F1F5F9;color:#64748B}
-.badge-progress{background:#FEF3C7;color:#92400E}
-
-/* ── Action buttons ── */
-.action-btn{padding:4px 10px;border-radius:5px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:#fff;color:var(--text);cursor:pointer;transition:all .12s}
-.action-btn:hover{border-color:var(--blue);color:var(--blue)}
-
-/* ── Modal ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:none;align-items:center;justify-content:center;padding:16px}
-.modal-overlay.open{display:flex}
+.badge-done{background:#DCFCE7;color:#166534}.badge-pending{background:#F1F5F9;color:#64748B}.badge-progress{background:#FEF3C7;color:#92400E}
+.action-btn{padding:4px 10px;border-radius:5px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:#fff;cursor:pointer}.action-btn:hover{border-color:var(--blue);color:var(--blue)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:none;align-items:center;justify-content:center;padding:16px}.modal-overlay.open{display:flex}
 .modal{background:#fff;border-radius:16px;padding:28px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
-.modal-title{font-size:18px;font-weight:800;margin-bottom:20px;color:var(--text)}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.form-grid .full{grid-column:1/-1}
-.field select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;background:#fff}
-.field select:focus,.field input:focus{border-color:var(--blue)}
-.field textarea{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none;resize:vertical;min-height:70px;font-family:'DM Sans',sans-serif}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:20px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.form-grid .full{grid-column:1/-1}
+.field textarea{resize:vertical;min-height:70px}
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
-
-/* ── Subscription expired ── */
 .expired-banner{background:linear-gradient(135deg,#7F1D1D,#DC2626);color:#fff;padding:20px 24px;border-radius:var(--radius);margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
-.expired-banner h3{font-size:16px;font-weight:800;margin-bottom:4px}
-.expired-banner p{font-size:13px;opacity:.9}
-.btn-white{background:#fff;color:#DC2626;font-weight:700;padding:10px 20px;border-radius:8px}
-
-/* ── Sync toast ── */
+.stage-dots{display:flex;gap:4px;align-items:center}.dot{width:10px;height:10px;border-radius:50%;background:var(--border)}.dot.done{background:var(--green)}.dot.progress{background:var(--amber)}
 #sync-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--blue);color:#fff;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:600;box-shadow:var(--shadow-lg);z-index:9999;opacity:0;transition:opacity .3s;max-width:90vw;text-align:center;pointer-events:none}
-
-/* ── Loading ── */
-.spinner{width:20px;height:20px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* ── Docs panel ── */
-.docs-section{margin-bottom:20px}
-.docs-section h4{font-size:13px;font-weight:700;color:var(--text-sec);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
 .doc-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg);border-radius:8px;margin-bottom:6px;border:1px solid var(--border)}
-.doc-check{width:18px;height:18px;cursor:pointer;accent-color:var(--green)}
-.doc-label{flex:1;font-size:13px;font-weight:600}
+.doc-check{width:18px;height:18px;cursor:pointer;accent-color:var(--green)}.doc-label{flex:1;font-size:13px;font-weight:600}
 .doc-input{flex:1;padding:5px 8px;border:1.5px solid var(--border);border-radius:5px;font-size:12px;font-family:'DM Mono',monospace;outline:none}
-.doc-input:focus{border-color:var(--blue)}
-
-/* ── Stage dots ── */
-.stage-dots{display:flex;gap:4px;align-items:center}
-.dot{width:10px;height:10px;border-radius:50%;background:var(--border)}
-.dot.done{background:var(--green)}
-.dot.progress{background:var(--amber)}
-
-/* ── Consumer acc ── */
-.acc-wrap{display:flex;align-items:center;gap:5px}
-.acc-text{font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:#1E3A5F}
-
-@media(max-width:768px){
-  .metrics{grid-template-columns:repeat(2,1fr)}
-  .form-grid{grid-template-columns:1fr}
-  .form-grid .full{grid-column:1}
-}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:768px){.metrics{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}.form-grid .full{grid-column:1}}
 </style>
 </head>
 <body>
 
-<!-- ── Auth Pages ── -->
+<!-- Auth -->
 <div id="auth-wrap" class="auth-wrap">
-  <!-- Login -->
   <div id="login-card" class="auth-card">
-    <div class="auth-logo">
-      <div class="auth-logo-icon">☀️</div>
-      <div>
-        <div class="auth-logo-text">SolarCRM</div>
-        <div class="auth-logo-sub">PM Surya Ghar Management</div>
-      </div>
-    </div>
+    <div class="auth-logo"><div class="auth-logo-icon">☀️</div><div><div class="auth-logo-text">SolarCRM</div><div class="auth-logo-sub">PM Surya Ghar Management</div></div></div>
     <h2 class="auth-title">Welcome back</h2>
     <p class="auth-sub">Sign in to your SolarCRM account</p>
     <div id="login-error" class="auth-error"></div>
     <div class="field"><label>Email</label><input type="email" id="login-email" placeholder="you@company.com"></div>
     <div class="field"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••"></div>
     <button class="btn-primary" id="login-btn" onclick="doLogin()">Sign In</button>
-    <div class="auth-switch">Don't have an account? <a onclick="showRegister()">Register free — 7 day trial</a></div>
+    <div class="auth-switch">No account? <a onclick="showRegister()">Register free — 7 day trial</a></div>
   </div>
-
-  <!-- Register -->
   <div id="register-card" class="auth-card" style="display:none">
-    <div class="auth-logo">
-      <div class="auth-logo-icon">☀️</div>
-      <div>
-        <div class="auth-logo-text">SolarCRM</div>
-        <div class="auth-logo-sub">PM Surya Ghar Management</div>
-      </div>
-    </div>
+    <div class="auth-logo"><div class="auth-logo-icon">☀️</div><div><div class="auth-logo-text">SolarCRM</div><div class="auth-logo-sub">PM Surya Ghar Management</div></div></div>
     <h2 class="auth-title">Create account</h2>
-    <div class="trial-badge">🎉 7-day free trial — unlimited customers, no credit card needed</div>
+    <div class="trial-badge">🎉 7-day free trial — unlimited customers</div>
     <div id="reg-error" class="auth-error"></div>
-    <div class="field"><label>Company Name</label><input type="text" id="reg-company" placeholder="e.g. Bharat Solar"></div>
-    <div class="field"><label>Your Name</label><input type="text" id="reg-name" placeholder="Full name"></div>
+    <div class="field"><label>Company Name</label><input id="reg-company" placeholder="e.g. Bharat Solar"></div>
+    <div class="field"><label>Your Name</label><input id="reg-name" placeholder="Full name"></div>
     <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="you@company.com"></div>
     <div class="field"><label>Phone</label><input type="tel" id="reg-phone" placeholder="9XXXXXXXXX"></div>
     <div class="field"><label>Password</label><input type="password" id="reg-pass" placeholder="Min 8 characters"></div>
     <button class="btn-primary" id="reg-btn" onclick="doRegister()">Start Free Trial</button>
-    <div class="auth-switch">Already have an account? <a onclick="showLogin()">Sign in</a></div>
+    <div class="auth-switch">Have account? <a onclick="showLogin()">Sign in</a></div>
   </div>
 </div>
 
-<!-- ── Main App ── -->
+<!-- App -->
 <div id="app">
-  <!-- Topbar -->
   <div class="topbar">
     <div class="topbar-left">
       <span style="font-size:22px">☀️</span>
-      <div>
-        <div class="topbar-logo">SolarCRM</div>
-        <div class="topbar-company" id="topbar-company">Loading...</div>
-      </div>
+      <div><div class="topbar-logo">SolarCRM</div><div class="topbar-company" id="topbar-company">...</div></div>
       <span class="plan-badge" id="plan-badge">Trial</span>
     </div>
     <div class="topbar-right">
       <span style="color:#93C5FD;font-size:12px" id="trial-info"></span>
-      <button class="topbar-btn" id="portal-status-btn" onclick="showPortalConnect()" style="background:#D97706;border-color:#D97706">⚡ Connect Portal</button>
+      <button class="topbar-btn" id="portal-status-btn" onclick="showPortalConnect()" style="background:#D97706">⚡ Connect Portal</button>
       <button class="topbar-btn" onclick="exportCSV()">Export CSV</button>
-      <button class="topbar-btn" onclick="copyMyToken()" title="Copy your token for the bookmarklet">🔑 My Token</button>
+      <button class="topbar-btn" onclick="copyMyToken()">🔑 My Token</button>
       <button class="topbar-btn" onclick="doLogout()">Sign Out</button>
     </div>
   </div>
-
   <div class="main">
-    <!-- Expired banner -->
     <div class="expired-banner" id="expired-banner" style="display:none">
-      <div>
-        <h3>⚠️ Your trial has expired</h3>
-        <p>Subscribe to continue using SolarCRM — ₹999/month, unlimited customers.</p>
-      </div>
-      <button class="btn-white" onclick="showSubscribe()">Subscribe Now ₹999/mo</button>
+      <div><h3 style="font-size:16px;font-weight:800;margin-bottom:4px">⚠️ Trial expired</h3><p style="font-size:13px;opacity:.9">Subscribe to continue — ₹999/month</p></div>
+      <button style="background:#fff;color:#DC2626;font-weight:700;padding:10px 20px;border-radius:8px" onclick="showSubscribe()">Subscribe Now</button>
     </div>
-
-    <!-- Metrics -->
-    <div class="metrics" id="metrics">
+    <div class="metrics">
       <div class="metric"><div class="metric-label">Total Customers</div><div class="metric-value b" id="m-total">0</div></div>
       <div class="metric"><div class="metric-label">Fully Complete</div><div class="metric-value g" id="m-complete">0</div></div>
       <div class="metric"><div class="metric-label">Installation Completed</div><div class="metric-value a" id="m-inst">0</div></div>
       <div class="metric"><div class="metric-label">Docs Collected</div><div class="metric-value" id="m-docs">0%</div></div>
     </div>
-
-    <!-- Tabs -->
     <div class="tabs">
       <div class="tab active" onclick="switchTab('customers',this)">Customers</div>
       <div class="tab" onclick="switchTab('docs',this)">Document Checklist</div>
       <div class="tab" onclick="switchTab('reminders',this)">Reminders</div>
     </div>
-
-    <!-- Customers Tab -->
     <div id="tab-customers">
       <div class="toolbar">
         <input type="text" class="search-input" placeholder="Search name, ID, consumer no..." id="search-input" oninput="render()">
         <select class="filter" id="filter-stage" onchange="render()">
           <option value="">All stages</option>
-          <option value="agr">Agreement</option>
-          <option value="fin">Financing</option>
-          <option value="dcr">DCR</option>
-          <option value="inst">Installation</option>
-          <option value="insp">Inspection</option>
-          <option value="subReq">Subsidy Request</option>
+          <option value="agr">Agreement</option><option value="fin">Financing</option>
+          <option value="dcr">DCR</option><option value="inst">Installation</option>
+          <option value="insp">Inspection</option><option value="subReq">Subsidy Request</option>
           <option value="subDisb">Subsidy Disbursal</option>
         </select>
         <button class="btn btn-blue" onclick="openAdd()">+ Add Customer</button>
@@ -263,43 +139,32 @@ tr:hover td{background:var(--blue-light)}
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>ID</th><th>Customer</th><th>kW</th>
-            <th>Agreement</th><th>Financing</th><th>DCR</th>
-            <th>Load/Cap</th><th>Installation</th><th>Inspection</th>
-            <th>Sub Request</th><th>Sub Disbursal</th>
-            <th>Consumer Acc.</th><th>Docs</th><th>Steps</th><th></th>
+            <th>ID</th><th>Customer</th><th>kW</th><th>Agreement</th><th>Financing</th>
+            <th>DCR</th><th>Load/Cap</th><th>Installation</th><th>Inspection</th>
+            <th>Sub Request</th><th>Sub Disbursal</th><th>Consumer Acc.</th><th>Docs</th><th>Steps</th><th></th>
           </tr></thead>
           <tbody id="tbl"></tbody>
         </table>
       </div>
     </div>
-
-    <!-- Docs Tab -->
     <div id="tab-docs" style="display:none">
       <div style="background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:20px">
-        <div class="field" style="margin-bottom:16px">
-          <label>Select Customer</label>
-          <select id="doc-sel" onchange="loadDocs()" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none">
-            <option value="">Select a customer...</option>
-          </select>
+        <div class="field" style="margin-bottom:16px"><label>Select Customer</label>
+          <select id="doc-sel" onchange="loadDocs()" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none"><option value="">Select a customer...</option></select>
         </div>
         <div id="doc-body"></div>
       </div>
     </div>
-
-    <!-- Reminders Tab -->
-    <div id="tab-reminders" style="display:none">
-      <div id="reminders-body" style="background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:20px"></div>
-    </div>
+    <div id="tab-reminders" style="display:none"><div id="reminders-body" style="background:#fff;border-radius:var(--radius);border:1px solid var(--border);padding:20px"></div></div>
   </div>
 </div>
 
-<!-- ── Add/Edit Customer Modal ── -->
+<!-- Customer Modal -->
 <div class="modal-overlay" id="cust-modal">
   <div class="modal">
     <div class="modal-title" id="modal-title">Add Customer</div>
     <div class="form-grid">
-      <div class="field full"><label>Customer ID</label><input id="f-id" placeholder="Auto-generated" readonly style="background:var(--bg)"></div>
+      <div class="field full"><label>Customer ID</label><input id="f-id" readonly style="background:var(--bg)"></div>
       <div class="field"><label>Full Name</label><input id="f-name" placeholder="Customer name"></div>
       <div class="field"><label>Mobile</label><input id="f-phone" type="tel" placeholder="10-digit number"></div>
       <div class="field"><label>System Size (kWp)</label><input id="f-kw" type="number" placeholder="e.g. 3" min="0"></div>
@@ -323,35 +188,60 @@ tr:hover td{background:var(--blue-light)}
   </div>
 </div>
 
-<!-- ── Docs Modal ── -->
+<!-- Docs Modal -->
 <div class="modal-overlay" id="docs-modal">
-  <div class="modal">
-    <div class="modal-title" id="docs-modal-title">Documents</div>
-    <div id="docs-modal-body"></div>
-    <div class="modal-actions">
-      <button class="btn btn-outline" onclick="closeModal('docs-modal')">Close</button>
-      <button class="btn btn-blue" onclick="saveDocs()">Save Docs</button>
-    </div>
+  <div class="modal"><div class="modal-title" id="docs-modal-title">Documents</div><div id="docs-modal-body"></div>
+    <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal('docs-modal')">Close</button><button class="btn btn-blue" onclick="saveDocs()">Save Docs</button></div>
   </div>
 </div>
 
-<!-- ── Subscribe Modal ── -->
+<!-- Subscribe Modal -->
 <div class="modal-overlay" id="sub-modal">
   <div class="modal" style="max-width:440px;text-align:center">
     <div style="font-size:48px;margin-bottom:12px">☀️</div>
     <div class="modal-title" style="text-align:center">Upgrade to Pro</div>
-    <p style="color:var(--text-sec);margin-bottom:20px;font-size:14px">Continue managing your solar business with unlimited customers, auto-sync, and all features.</p>
     <div style="background:var(--blue-light);border-radius:10px;padding:20px;margin-bottom:20px">
       <div style="font-size:32px;font-weight:800;color:var(--blue)">₹999<span style="font-size:14px;font-weight:500">/month</span></div>
-      <div style="font-size:13px;color:var(--text-sec);margin-top:4px">Unlimited customers • All features • Priority support</div>
+      <div style="font-size:13px;color:var(--text-sec);margin-top:4px">Unlimited customers • All features</div>
     </div>
-    <button class="btn btn-blue" style="width:100%;padding:14px;font-size:16px" onclick="activatePro()">Pay ₹999 — Activate Pro</button>
-    <div style="margin-top:12px;font-size:12px;color:var(--text-sec)">Razorpay payment coming soon. Contact us to activate manually.</div>
+    <button class="btn btn-blue" style="width:100%;padding:14px;font-size:16px" onclick="activatePro()">Activate Pro</button>
     <button class="btn btn-outline" style="width:100%;margin-top:8px" onclick="closeModal('sub-modal')">Maybe later</button>
   </div>
 </div>
 
-<!-- Sync Toast -->
+<!-- Portal Connect Modal -->
+<div class="modal-overlay" id="portal-modal">
+  <div class="modal" style="max-width:540px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div style="font-size:28px">☀️</div>
+      <div><div style="font-size:18px;font-weight:800">Sync PM Surya Ghar Customers</div>
+      <div style="font-size:13px;color:var(--text-sec)">Works in any browser • No extension needed</div></div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <div style="flex:1;background:var(--blue);color:#fff;border-radius:8px;padding:10px;text-align:center;font-size:12px;font-weight:700"><div style="font-size:18px;margin-bottom:4px">1️⃣</div>Copy script</div>
+      <div style="flex:1;background:#E2E8F0;color:#64748B;border-radius:8px;padding:10px;text-align:center;font-size:12px;font-weight:700"><div style="font-size:18px;margin-bottom:4px">2️⃣</div>Open portal, F12→Console</div>
+      <div style="flex:1;background:#E2E8F0;color:#64748B;border-radius:8px;padding:10px;text-align:center;font-size:12px;font-weight:700"><div style="font-size:18px;margin-bottom:4px">3️⃣</div>Type "allow pasting"→paste→Enter</div>
+    </div>
+
+    <div style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <label style="font-size:12px;font-weight:700;color:var(--text-sec);text-transform:uppercase">Your Sync Script</label>
+        <button class="btn btn-blue" style="padding:6px 14px;font-size:12px" id="copy-btn" onclick="copyScript()">📋 Copy Script</button>
+      </div>
+      <div id="script-box" style="background:#0F172A;color:#7DD3FC;padding:12px;border-radius:8px;font-family:'DM Mono',monospace;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;border:2px solid transparent" onclick="copyScript()">Loading...</div>
+      <div style="font-size:11px;color:var(--text-sec);margin-top:4px">👆 Click to copy • Script includes your login token automatically</div>
+    </div>
+
+    <a href="https://vendor.pmsuryaghar.gov.in/vendor/#/signed-in/my-application" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:12px;display:flex">🌐 Open PM Surya Ghar Portal</a>
+
+    <div id="portal-connected-info" style="display:none;background:var(--green-bg);border-radius:8px;padding:12px;font-size:13px;color:var(--green);font-weight:600">
+      ✅ Last sync: <span id="last-sync-time">Never</span>
+    </div>
+    <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal('portal-modal')">Close</button></div>
+  </div>
+</div>
+
 <div id="sync-toast"></div>
 
 <script>
@@ -362,142 +252,98 @@ let customers = [];
 let editIdx = -1;
 
 const stageOrder = ['agr','fin','dcr','inst','insp','subReq','subDisb'];
-const statusLabel = { pending:'Pending', 'in-progress':'In Prog', done:'Done' };
-const statusClass = { pending:'badge badge-pending', 'in-progress':'badge badge-progress', done:'badge badge-done' };
+const statusLabel = {pending:'Pending','in-progress':'In Prog',done:'Done'};
+const statusClass = {pending:'badge badge-pending','in-progress':'badge badge-progress',done:'badge badge-done'};
 const DOC_LIST = [
   {id:'aadhar',label:'Aadhar Card'},{id:'pan',label:'PAN Card'},{id:'light',label:'Electricity Bill'},
   {id:'photo',label:'Passport Photo'},{id:'bank',label:'Bank Passbook'},{id:'noc',label:'NOC'},
   {id:'site',label:'Site Photos'},{id:'invoice',label:'Invoice'},{id:'warranty',label:'Warranty Card'},
   {id:'net',label:'Net Meter Application'},{id:'ca',label:'CA Certificate'},{id:'completion',label:'Completion Certificate'},
-  {id:'subsidy',label:'Subsidy Form'},{id:'discharge',label:'Discharge Certificate'},
-  {id:'inspection',label:'Inspection Report'}
+  {id:'subsidy',label:'Subsidy Form'},{id:'discharge',label:'Discharge Certificate'},{id:'inspection',label:'Inspection Report'}
 ];
 
-// ── Init ──
-window.addEventListener('load', async () => {
-  if (token) await loadApp();
-  else showAuth();
-});
+window.addEventListener('load', async () => { if(token) await loadApp(); else showAuth(); });
 
 async function loadApp() {
   try {
     const res = await apiFetch('/api/me');
-    if (!res.ok) { token = null; localStorage.removeItem('solarcrm_token'); showAuth(); return; }
+    if(!res.ok){token=null;localStorage.removeItem('solarcrm_token');showAuth();return;}
     vendor = await res.json();
     await loadCustomers();
     showApp();
-  } catch(e) { showAuth(); }
+  } catch(e){showAuth();}
 }
 
 async function loadCustomers() {
   const res = await apiFetch('/api/customers');
-  if (!res.ok) {
-    if (res.status === 403) { vendor.plan = 'expired'; return; }
-    return;
-  }
-  const raw = await res.json();
-  customers = raw.map(dbToLocal);
+  if(!res.ok){if(res.status===403)vendor.plan='expired';return;}
+  customers = (await res.json()).map(dbToLocal);
 }
 
 function dbToLocal(c) {
-  return {
-    id: c.id, name: c.name, phone: c.phone, kw: c.kw, loc: c.loc,
-    agr: c.agr, fin: c.fin, dcr: c.dcr, insp: c.insp, inst: c.inst,
-    subReq: c.sub_req, subDisb: c.sub_disb, sub: c.sub,
-    subAmt: c.sub_amt, subRecv: c.sub_recv, loan: c.loan, bank: c.bank,
-    dcrNo: c.dcr_no, dcrDate: c.dcr_date, instDate: c.inst_date,
-    consumerAcc: c.consumer_acc, sanctionedLoad: c.sanctioned_load,
-    statusRaw: c.status_raw, appNo: c.app_no, discom: c.discom,
-    submittedOn: c.submitted_on, notes: c.notes, remind: c.remind,
-    remindTime: c.remind_time, docs: c.docs || {}, docInputs: c.doc_inputs || {},
-    panelSerials: c.panel_serials || {}
-  };
+  return {id:c.id,name:c.name,phone:c.phone,kw:c.kw,loc:c.loc,agr:c.agr,fin:c.fin,dcr:c.dcr,insp:c.insp,inst:c.inst,subReq:c.sub_req,subDisb:c.sub_disb,sub:c.sub,subAmt:c.sub_amt,subRecv:c.sub_recv,loan:c.loan,bank:c.bank,dcrNo:c.dcr_no,dcrDate:c.dcr_date,instDate:c.inst_date,consumerAcc:c.consumer_acc,sanctionedLoad:c.sanctioned_load,statusRaw:c.status_raw,appNo:c.app_no,discom:c.discom,submittedOn:c.submitted_on,notes:c.notes,remind:c.remind,remindTime:c.remind_time,docs:c.docs||{},docInputs:c.doc_inputs||{},panelSerials:c.panel_serials||{}};
 }
 
-// ── Auth ──
-function showAuth() { document.getElementById('auth-wrap').style.display='flex'; document.getElementById('app').style.display='none'; }
-function showApp() {
+function showAuth(){document.getElementById('auth-wrap').style.display='flex';document.getElementById('app').style.display='none';}
+function showApp(){
   document.getElementById('auth-wrap').style.display='none';
   document.getElementById('app').style.display='block';
-  document.getElementById('topbar-company').textContent = vendor.company;
-  const badge = document.getElementById('plan-badge');
-  badge.textContent = vendor.plan === 'pro' ? 'Pro' : vendor.plan === 'trial' ? 'Trial' : 'Expired';
-  badge.className = 'plan-badge ' + vendor.plan;
-  if (vendor.plan === 'trial') {
-    const days = Math.ceil((new Date(vendor.trial_ends_at) - new Date()) / 86400000);
-    document.getElementById('trial-info').textContent = days > 0 ? `${days} days left in trial` : 'Trial expired';
-  }
-  if (vendor.plan === 'expired') document.getElementById('expired-banner').style.display='flex';
-  render(); updateMetrics(); updateDocSel();
+  document.getElementById('topbar-company').textContent=vendor.company;
+  const b=document.getElementById('plan-badge');
+  b.textContent=vendor.plan==='pro'?'Pro':vendor.plan==='trial'?'Trial':'Expired';
+  b.className='plan-badge '+vendor.plan;
+  if(vendor.plan==='trial'){const d=Math.ceil((new Date(vendor.trial_ends_at)-new Date())/86400000);document.getElementById('trial-info').textContent=d>0?d+' days left in trial':'';}
+  if(vendor.plan==='expired')document.getElementById('expired-banner').style.display='flex';
+  render();updateMetrics();updateDocSel();
 }
-function showLogin() { document.getElementById('login-card').style.display=''; document.getElementById('register-card').style.display='none'; }
-function showRegister() { document.getElementById('login-card').style.display='none'; document.getElementById('register-card').style.display=''; }
+function showLogin(){document.getElementById('login-card').style.display='';document.getElementById('register-card').style.display='none';}
+function showRegister(){document.getElementById('login-card').style.display='none';document.getElementById('register-card').style.display='';}
 
-async function doLogin() {
-  const btn = document.getElementById('login-btn');
-  const err = document.getElementById('login-error');
-  err.style.display='none';
-  btn.disabled=true; btn.textContent='Signing in...';
-  try {
-    const res = await fetch(API+'/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email: document.getElementById('login-email').value, password: document.getElementById('login-pass').value }) });
-    const data = await res.json();
-    if (!res.ok) { err.textContent=data.error; err.style.display=''; btn.disabled=false; btn.textContent='Sign In'; return; }
-    token = data.token; vendor = data.vendor;
-    localStorage.setItem('solarcrm_token', token);
-    await loadCustomers();
-    showApp();
-  } catch(e) { err.textContent='Connection error'; err.style.display=''; btn.disabled=false; btn.textContent='Sign In'; }
+async function doLogin(){
+  const btn=document.getElementById('login-btn'),err=document.getElementById('login-error');
+  err.style.display='none';btn.disabled=true;btn.textContent='Signing in...';
+  try{
+    const res=await fetch(API+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:document.getElementById('login-email').value,password:document.getElementById('login-pass').value})});
+    const d=await res.json();
+    if(!res.ok){err.textContent=d.error;err.style.display='';btn.disabled=false;btn.textContent='Sign In';return;}
+    token=d.token;vendor=d.vendor;localStorage.setItem('solarcrm_token',token);
+    await loadCustomers();showApp();
+  }catch(e){err.textContent='Connection error';err.style.display='';btn.disabled=false;btn.textContent='Sign In';}
 }
 
-async function doRegister() {
-  const btn = document.getElementById('reg-btn');
-  const err = document.getElementById('reg-error');
-  err.style.display='none';
-  btn.disabled=true; btn.textContent='Creating account...';
-  try {
-    const res = await fetch(API+'/api/register', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({
-      email: document.getElementById('reg-email').value,
-      password: document.getElementById('reg-pass').value,
-      company: document.getElementById('reg-company').value,
-      name: document.getElementById('reg-name').value,
-      phone: document.getElementById('reg-phone').value
-    })});
-    const data = await res.json();
-    if (!res.ok) { err.textContent=data.error; err.style.display=''; btn.disabled=false; btn.textContent='Start Free Trial'; return; }
-    token = data.token; vendor = data.vendor;
-    localStorage.setItem('solarcrm_token', token);
-    customers = [];
-    showApp();
-  } catch(e) { err.textContent='Connection error'; err.style.display=''; btn.disabled=false; btn.textContent='Start Free Trial'; }
+async function doRegister(){
+  const btn=document.getElementById('reg-btn'),err=document.getElementById('reg-error');
+  err.style.display='none';btn.disabled=true;btn.textContent='Creating account...';
+  try{
+    const res=await fetch(API+'/api/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:document.getElementById('reg-email').value,password:document.getElementById('reg-pass').value,company:document.getElementById('reg-company').value,name:document.getElementById('reg-name').value,phone:document.getElementById('reg-phone').value})});
+    const d=await res.json();
+    if(!res.ok){err.textContent=d.error;err.style.display='';btn.disabled=false;btn.textContent='Start Free Trial';return;}
+    token=d.token;vendor=d.vendor;localStorage.setItem('solarcrm_token',token);customers=[];showApp();
+  }catch(e){err.textContent='Connection error';err.style.display='';btn.disabled=false;btn.textContent='Start Free Trial';}
 }
 
-function copyMyToken() {
-  const t = localStorage.getItem('solarcrm_token');
-  if (!t) return;
-  navigator.clipboard.writeText(t).then(() => showToast('Token copied! Paste it when the bookmarklet asks.', 4000));
-}
-function doLogout() { token=null; vendor=null; customers=[]; localStorage.removeItem('solarcrm_token'); showAuth(); showLogin(); }
+function doLogout(){token=null;vendor=null;customers=[];localStorage.removeItem('solarcrm_token');showAuth();showLogin();}
+function copyMyToken(){const t=localStorage.getItem('solarcrm_token');if(!t)return;navigator.clipboard.writeText(t).then(()=>showToast('Token copied!',3000));}
 
-// ── Render ──
-function render() {
-  const q = (document.getElementById('search-input').value||'').toLowerCase();
-  const f = document.getElementById('filter-stage').value;
-  let list = customers.filter(c => {
-    if (q && !c.name.toLowerCase().includes(q) && !(c.phone||'').includes(q) && !(c.consumerAcc||'').includes(q) && !(c.id||'').toLowerCase().includes(q)) return false;
-    if (f && c[f] === 'done') return false;
+function render(){
+  const q=(document.getElementById('search-input').value||'').toLowerCase();
+  const f=document.getElementById('filter-stage').value;
+  const list=customers.filter(c=>{
+    if(q&&!c.name.toLowerCase().includes(q)&&!(c.phone||'').includes(q)&&!(c.consumerAcc||'').includes(q)&&!(c.id||'').toLowerCase().includes(q))return false;
+    if(f&&c[f]==='done')return false;
     return true;
   });
-  document.getElementById('tbl').innerHTML = list.length ? list.map((c,i) => renderRow(c, customers.indexOf(c))).join('') : `<tr><td colspan="15" style="text-align:center;padding:40px;color:var(--text-light)">No customers found</td></tr>`;
+  document.getElementById('tbl').innerHTML=list.length?list.map(c=>renderRow(c,customers.indexOf(c))).join(''):`<tr><td colspan="15" style="text-align:center;padding:40px;color:var(--text-light)">No customers found</td></tr>`;
   updateMetrics();
 }
 
-function renderRow(c, ri) {
-  const sl = parseFloat(c.sanctionedLoad)||0, pc = parseFloat(c.kw)||0;
-  const loadOk = sl>0&&pc>0&&sl>=pc;
-  const loadCell = sl>0 ? `<div style="font-weight:700;font-size:12px;color:${loadOk?'#16A34A':'#DC2626'}">${sl}/${pc}kW</div><div style="font-size:10px;color:${loadOk?'#16A34A':'#DC2626'}">${loadOk?'✅':'⚠️'}</div>` : '<span style="color:var(--text-light)">—</span>';
-  const docs = c.docs||{}, done=DOC_LIST.filter(d=>docs[d.id]).length, total=DOC_LIST.length;
-  const pct = Math.round(done/total*100);
-  const dots = stageOrder.map(s=>`<div class="dot ${c[s]==='done'?'done':c[s]==='in-progress'?'progress':''}"></div>`).join('');
+function renderRow(c,ri){
+  const sl=parseFloat(c.sanctionedLoad)||0,pc=parseFloat(c.kw)||0;
+  const loadOk=sl>0&&pc>0&&sl>=pc;
+  const loadCell=sl>0?`<div style="font-weight:700;font-size:12px;color:${loadOk?'#16A34A':'#DC2626'}">${sl}/${pc}kW</div><div style="font-size:10px;color:${loadOk?'#16A34A':'#DC2626'}">${loadOk?'✅':'⚠️'}</div>`:'<span style="color:var(--text-light)">—</span>';
+  const docs=c.docs||{},done=DOC_LIST.filter(d=>docs[d.id]).length,total=DOC_LIST.length;
+  const pct=Math.round(done/total*100);
+  const dots=stageOrder.map(s=>`<div class="dot ${c[s]==='done'?'done':c[s]==='in-progress'?'progress':''}"></div>`).join('');
   return `<tr>
     <td style="font-size:12px;color:var(--text-sec);font-weight:600;font-family:'DM Mono',monospace">${c.id}</td>
     <td><div style="font-weight:600;font-size:13px">${c.name}</div><div style="font-size:11px;color:var(--text-sec)">${c.phone||''}${c.loc?' · '+c.loc:''}</div></td>
@@ -510,433 +356,136 @@ function renderRow(c, ri) {
     <td><span class="${statusClass[c.insp||'pending']}">${statusLabel[c.insp||'pending']}</span></td>
     <td><span class="${statusClass[c.subReq||'pending']}">${statusLabel[c.subReq||'pending']}</span></td>
     <td><span class="${statusClass[c.subDisb||'pending']}">${statusLabel[c.subDisb||'pending']}</span></td>
-    <td>${c.consumerAcc?`<div class="acc-wrap"><span class="acc-text">${c.consumerAcc}</span><button class="action-btn" style="font-size:11px" onclick="event.stopPropagation();copyAcc('${c.consumerAcc}',this)">📋</button></div>`:'<span style="color:var(--text-light)">—</span>'}</td>
+    <td>${c.consumerAcc?`<div style="display:flex;align-items:center;gap:5px"><span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:700">${c.consumerAcc}</span><button class="action-btn" style="font-size:11px" onclick="event.stopPropagation();copyAcc('${c.consumerAcc}',this)">📋</button></div>`:'<span style="color:var(--text-light)">—</span>'}</td>
     <td><div style="display:flex;align-items:center;gap:6px"><div style="width:50px;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--green)"></div></div><span style="font-size:11px;font-weight:600;color:var(--text-sec)">${done}/${total}</span></div></td>
     <td><div class="stage-dots">${dots}</div><div style="font-size:11px;color:var(--text-sec);margin-top:2px">${stageOrder.filter(s=>c[s]==='done').length}/${stageOrder.length}</div></td>
     <td style="white-space:nowrap"><button class="action-btn" onclick="openEdit(${ri})">Edit</button> <button class="action-btn" onclick="openDocsModal(${ri})">Docs</button></td>
   </tr>`;
 }
 
-function updateMetrics() {
-  document.getElementById('m-total').textContent = customers.length;
-  document.getElementById('m-complete').textContent = customers.filter(c=>stageOrder.every(s=>c[s]==='done')).length;
-  document.getElementById('m-inst').textContent = customers.filter(c=>c.inst==='done').length;
-  const docPct = customers.length ? Math.round(customers.reduce((sum,c)=>{const d=c.docs||{};return sum+DOC_LIST.filter(x=>d[x.id]).length;},0)/customers.length/DOC_LIST.length*100) : 0;
-  document.getElementById('m-docs').textContent = docPct+'%';
+function updateMetrics(){
+  document.getElementById('m-total').textContent=customers.length;
+  document.getElementById('m-complete').textContent=customers.filter(c=>stageOrder.every(s=>c[s]==='done')).length;
+  document.getElementById('m-inst').textContent=customers.filter(c=>c.inst==='done').length;
+  const p=customers.length?Math.round(customers.reduce((s,c)=>{const d=c.docs||{};return s+DOC_LIST.filter(x=>d[x.id]).length;},0)/customers.length/DOC_LIST.length*100):0;
+  document.getElementById('m-docs').textContent=p+'%';
 }
 
-// ── Add/Edit Customer ──
-function openAdd() {
-  editIdx=-1;
-  document.getElementById('modal-title').textContent='Add Customer';
+function openAdd(){
+  editIdx=-1;document.getElementById('modal-title').textContent='Add Customer';
   ['f-id','f-name','f-phone','f-kw','f-sanction','f-loc','f-consumer-acc','f-sub-amt','f-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   ['f-agr','f-fin','f-dcr','f-inst','f-insp','f-sub-req','f-sub-disb'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='pending';});
-  const prefix=(vendor.company||'SOL').slice(0,3).toUpperCase();
-  document.getElementById('f-id').value = prefix+'-'+String(customers.length+1).padStart(3,'0');
+  document.getElementById('f-id').value=(vendor.company||'SOL').slice(0,3).toUpperCase()+'-'+String(customers.length+1).padStart(3,'0');
   openModal('cust-modal');
 }
 
-function openEdit(ri) {
-  editIdx=ri;
-  const c=customers[ri];
+function openEdit(ri){
+  editIdx=ri;const c=customers[ri];
   document.getElementById('modal-title').textContent='Edit Customer';
-  document.getElementById('f-id').value=c.id;
-  document.getElementById('f-name').value=c.name||'';
-  document.getElementById('f-phone').value=c.phone||'';
-  document.getElementById('f-kw').value=c.kw||'';
-  document.getElementById('f-sanction').value=c.sanctionedLoad||'';
-  document.getElementById('f-loc').value=c.loc||'';
-  document.getElementById('f-consumer-acc').value=c.consumerAcc||'';
-  document.getElementById('f-sub-amt').value=c.subAmt||'';
+  document.getElementById('f-id').value=c.id;document.getElementById('f-name').value=c.name||'';
+  document.getElementById('f-phone').value=c.phone||'';document.getElementById('f-kw').value=c.kw||'';
+  document.getElementById('f-sanction').value=c.sanctionedLoad||'';document.getElementById('f-loc').value=c.loc||'';
+  document.getElementById('f-consumer-acc').value=c.consumerAcc||'';document.getElementById('f-sub-amt').value=c.subAmt||'';
   document.getElementById('f-notes').value=c.notes||'';
-  document.getElementById('f-agr').value=c.agr||'pending';
-  document.getElementById('f-fin').value=c.fin||'pending';
-  document.getElementById('f-dcr').value=c.dcr||'pending';
-  document.getElementById('f-inst').value=c.inst||'pending';
-  document.getElementById('f-insp').value=c.insp||'pending';
+  ['agr','fin','dcr','inst','insp'].forEach(s=>document.getElementById('f-'+s).value=c[s]||'pending');
   document.getElementById('f-sub-req').value=c.subReq||'pending';
   document.getElementById('f-sub-disb').value=c.subDisb||'pending';
   openModal('cust-modal');
 }
 
-async function saveCustomer() {
-  const c = {
-    id: document.getElementById('f-id').value.trim(),
-    name: document.getElementById('f-name').value.trim(),
-    phone: document.getElementById('f-phone').value.trim(),
-    kw: parseFloat(document.getElementById('f-kw').value)||0,
-    sanctionedLoad: parseFloat(document.getElementById('f-sanction').value)||0,
-    loc: document.getElementById('f-loc').value.trim(),
-    consumerAcc: document.getElementById('f-consumer-acc').value.trim(),
-    subAmt: parseFloat(document.getElementById('f-sub-amt').value)||0,
-    notes: document.getElementById('f-notes').value.trim(),
-    agr: document.getElementById('f-agr').value,
-    fin: document.getElementById('f-fin').value,
-    dcr: document.getElementById('f-dcr').value,
-    inst: document.getElementById('f-inst').value,
-    insp: document.getElementById('f-insp').value,
-    subReq: document.getElementById('f-sub-req').value,
-    subDisb: document.getElementById('f-sub-disb').value,
-    sub: document.getElementById('f-sub-disb').value,
-  };
-  if (!c.name) { alert('Name is required'); return; }
-  if (editIdx>=0) {
-    c.docs=customers[editIdx].docs||{}; c.docInputs=customers[editIdx].docInputs||{}; c.panelSerials=customers[editIdx].panelSerials||{};
-    customers[editIdx]={...customers[editIdx],...c};
-  } else {
-    c.docs={}; c.docInputs={}; c.panelSerials={};
-    customers.push(c);
-  }
-  await syncToServer();
-  closeModal('cust-modal'); render(); updateDocSel();
+async function saveCustomer(){
+  const c={id:document.getElementById('f-id').value.trim(),name:document.getElementById('f-name').value.trim(),phone:document.getElementById('f-phone').value.trim(),kw:parseFloat(document.getElementById('f-kw').value)||0,sanctionedLoad:parseFloat(document.getElementById('f-sanction').value)||0,loc:document.getElementById('f-loc').value.trim(),consumerAcc:document.getElementById('f-consumer-acc').value.trim(),subAmt:parseFloat(document.getElementById('f-sub-amt').value)||0,notes:document.getElementById('f-notes').value.trim(),agr:document.getElementById('f-agr').value,fin:document.getElementById('f-fin').value,dcr:document.getElementById('f-dcr').value,inst:document.getElementById('f-inst').value,insp:document.getElementById('f-insp').value,subReq:document.getElementById('f-sub-req').value,subDisb:document.getElementById('f-sub-disb').value,sub:document.getElementById('f-sub-disb').value};
+  if(!c.name){alert('Name is required');return;}
+  if(editIdx>=0){c.docs=customers[editIdx].docs||{};c.docInputs=customers[editIdx].docInputs||{};c.panelSerials=customers[editIdx].panelSerials||{};customers[editIdx]={...customers[editIdx],...c};}
+  else{c.docs={};c.docInputs={};c.panelSerials={};customers.push(c);}
+  await syncToServer();closeModal('cust-modal');render();updateDocSel();
 }
 
-// ── Docs ──
-function openDocsModal(ri) {
-  const c=customers[ri];
-  document.getElementById('docs-modal-title').textContent='Documents — '+c.name;
-  renderDocsForm(c, ri, 'docs-modal-body');
-  openModal('docs-modal');
-}
+function openDocsModal(ri){const c=customers[ri];document.getElementById('docs-modal-title').textContent='Documents — '+c.name;renderDocsForm(c,ri,'docs-modal-body');openModal('docs-modal');}
+function renderDocsForm(c,ri,cId){const docs=c.docs||{},inputs=c.docInputs||{};document.getElementById(cId).innerHTML=`<div>${DOC_LIST.map(d=>`<div class="doc-item"><input type="checkbox" class="doc-check" id="dc-${d.id}" ${docs[d.id]?'checked':''} onchange="docChanged(${ri},'${d.id}',this.checked)"><label class="doc-label" for="dc-${d.id}">${d.label}</label><input type="text" class="doc-input" placeholder="Reference" value="${inputs[d.id]||''}" onchange="docInputChanged(${ri},'${d.id}',this.value)"></div>`).join('')}</div>`;}
+function docChanged(ri,id,v){if(!customers[ri].docs)customers[ri].docs={};customers[ri].docs[id]=v;}
+function docInputChanged(ri,id,v){if(!customers[ri].docInputs)customers[ri].docInputs={};customers[ri].docInputs[id]=v;}
+async function saveDocs(){await syncToServer();closeModal('docs-modal');render();}
+function loadDocs(){const idx=parseInt(document.getElementById('doc-sel').value);if(isNaN(idx)){document.getElementById('doc-body').innerHTML='';return;}renderDocsForm(customers[idx],idx,'doc-body');}
+function updateDocSel(){document.getElementById('doc-sel').innerHTML='<option value="">Select a customer...</option>'+customers.map((c,i)=>`<option value="${i}">${c.id} — ${c.name}</option>`).join('');}
 
-function renderDocsForm(c, ri, containerId) {
-  const docs=c.docs||{}, inputs=c.docInputs||{};
-  document.getElementById(containerId).innerHTML = `<div class="docs-section"><h4>Document Checklist</h4>${
-    DOC_LIST.map(d=>`<div class="doc-item">
-      <input type="checkbox" class="doc-check" id="doc-${d.id}" ${docs[d.id]?'checked':''} onchange="docChanged(${ri},'${d.id}',this.checked)">
-      <label class="doc-label" for="doc-${d.id}">${d.label}</label>
-      <input type="text" class="doc-input" placeholder="Reference / number" value="${inputs[d.id]||''}" onchange="docInputChanged(${ri},'${d.id}',this.value)">
-    </div>`).join('')
-  }</div>`;
-}
-
-function docChanged(ri, id, checked) { if(!customers[ri].docs) customers[ri].docs={}; customers[ri].docs[id]=checked; }
-function docInputChanged(ri, id, val) { if(!customers[ri].docInputs) customers[ri].docInputs={}; customers[ri].docInputs[id]=val; }
-async function saveDocs() { await syncToServer(); closeModal('docs-modal'); render(); }
-
-function loadDocs() {
-  const idx=parseInt(document.getElementById('doc-sel').value);
-  if(isNaN(idx)) { document.getElementById('doc-body').innerHTML=''; return; }
-  renderDocsForm(customers[idx], idx, 'doc-body');
-}
-
-function updateDocSel() {
-  const sel=document.getElementById('doc-sel');
-  sel.innerHTML='<option value="">Select a customer...</option>'+customers.map((c,i)=>`<option value="${i}">${c.id} — ${c.name}</option>`).join('');
-}
-
-// ── Delete All ──
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('btn-delete-all').addEventListener('click', async () => {
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('btn-delete-all').addEventListener('click',async()=>{
     if(!customers.length){alert('No customers to delete.');return;}
-    if(!confirm(`Delete ALL ${customers.length} customers? This cannot be undone.`)) return;
-    if(!confirm(`SECOND CONFIRMATION — Permanently delete ALL ${customers.length} customers?`)) return;
-    const typed=prompt('Type DELETE to confirm:');
-    if(!typed||typed.trim().toUpperCase()!=='DELETE'){alert('Cancelled.');return;}
+    if(!confirm('Delete ALL '+customers.length+' customers? This cannot be undone.'))return;
+    if(!confirm('SECOND CONFIRMATION — Delete ALL '+customers.length+' customers?'))return;
+    const t=prompt('Type DELETE to confirm:');
+    if(!t||t.trim().toUpperCase()!=='DELETE'){alert('Cancelled.');return;}
     await apiFetch('/api/customers',{method:'DELETE'});
-    customers=[];render();updateDocSel();
-    showToast('All customers deleted.');
+    customers=[];render();updateDocSel();showToast('All customers deleted.');
   });
 });
 
-// ── Export CSV ──
-function exportCSV() {
-  const headers=['ID','Name','Phone','kW','Location','Agreement','Financing','DCR','Installation','Inspection','Sub Request','Sub Disbursal','Consumer Acc','Notes'];
+function exportCSV(){
+  const h=['ID','Name','Phone','kW','Location','Agreement','Financing','DCR','Installation','Inspection','Sub Request','Sub Disbursal','Consumer Acc','Notes'];
   const rows=customers.map(c=>[c.id,c.name,c.phone,c.kw,c.loc,c.agr,c.fin,c.dcr,c.inst,c.insp,c.subReq,c.subDisb,c.consumerAcc,c.notes].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(','));
-  const csv=[headers.join(','),...rows].join('\n');
+  const csv=[h.join(','),...rows].join('\n');
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download=`SolarCRM_${vendor.company}_${new Date().toISOString().slice(0,10)}.csv`;a.click();
 }
 
-// ── Subscribe ──
-function showSubscribe() { openModal('sub-modal'); }
-async function activatePro() {
-  const res=await apiFetch('/api/subscribe',{method:'POST'});
-  const d=await res.json();
-  if(d.success){vendor.plan='pro';showToast('Pro activated! Enjoy unlimited access.');closeModal('sub-modal');showApp();}
-}
+function showSubscribe(){openModal('sub-modal');}
+async function activatePro(){const res=await apiFetch('/api/subscribe',{method:'POST'});const d=await res.json();if(d.success){vendor.plan='pro';showToast('Pro activated!');closeModal('sub-modal');showApp();}}
+async function syncToServer(){await apiFetch('/api/customers/sync',{method:'POST',body:JSON.stringify({customers})});}
+async function apiFetch(path,opts={}){return fetch(API+path,{...opts,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,...(opts.headers||{})}});}
 
-// ── Sync to server ──
-async function syncToServer() {
-  const res = await apiFetch('/api/customers/sync', { method:'POST', body: JSON.stringify({ customers }) });
-  if (!res.ok) console.error('Sync failed');
-}
-
-// ── API helper ──
-async function apiFetch(path, opts={}) {
-  return fetch(API+path, { ...opts, headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token, ...(opts.headers||{}) } });
-}
-
-// ── Tab switch ──
-function switchTab(tab, el) {
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  el.classList.add('active');
+function switchTab(tab,el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
   ['customers','docs','reminders'].forEach(t=>document.getElementById('tab-'+t).style.display=t===tab?'':'none');
-  if(tab==='docs') loadDocs();
-  if(tab==='reminders') renderReminders();
+  if(tab==='docs')loadDocs();if(tab==='reminders')renderReminders();
 }
 
-// ── Reminders ──
-function renderReminders() {
+function renderReminders(){
   const today=new Date().toISOString().slice(0,10);
   const due=customers.filter(c=>c.remind&&c.remind<=today&&stageOrder.some(s=>c[s]!=='done'));
-  document.getElementById('reminders-body').innerHTML = due.length
-    ? `<h3 style="margin-bottom:12px;font-size:15px;font-weight:700">Due Reminders (${due.length})</h3>`+due.map(c=>`<div style="padding:12px;background:var(--amber-bg);border-radius:8px;margin-bottom:8px;border:1px solid #FCD34D"><div style="font-weight:700">${c.name}</div><div style="font-size:12px;color:var(--text-sec)">${c.phone} · Reminder: ${c.remind} ${c.remindTime}</div></div>`).join('')
-    : '<div style="text-align:center;padding:40px;color:var(--text-light)">No reminders due today</div>';
+  document.getElementById('reminders-body').innerHTML=due.length?`<h3 style="margin-bottom:12px;font-size:15px;font-weight:700">Due Reminders (${due.length})</h3>`+due.map(c=>`<div style="padding:12px;background:var(--amber-bg);border-radius:8px;margin-bottom:8px;border:1px solid #FCD34D"><div style="font-weight:700">${c.name}</div><div style="font-size:12px;color:var(--text-sec)">${c.phone} · ${c.remind}</div></div>`).join(''):'<div style="text-align:center;padding:40px;color:var(--text-light)">No reminders due</div>';
 }
 
-// ── Helpers ──
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function copyAcc(acc,btn){navigator.clipboard.writeText(acc);btn.textContent='✅';setTimeout(()=>btn.textContent='📋',1500);}
 function showToast(msg,dur=3000){const t=document.getElementById('sync-toast');t.textContent=msg;t.style.opacity='1';setTimeout(()=>t.style.opacity='0',dur);}
 
-// ── Extension bridge: receive import from Chrome extension ──
-const PENDING_KEY = 'bhsolar_pending_import_online';
-const PENDING_SINGLE = 'bhsolar_pending_single_online';
-
-setInterval(async () => {
-  const bulk = localStorage.getItem(PENDING_KEY);
-  if (bulk) {
-    localStorage.removeItem(PENDING_KEY);
-    try { await importFromPortal(JSON.parse(bulk)); } catch(e){}
-  }
-  const single = localStorage.getItem(PENDING_SINGLE);
-  if (single) {
-    localStorage.removeItem(PENDING_SINGLE);
-    try { fillForm(JSON.parse(single)); openAdd(); } catch(e){}
-  }
-}, 1000);
-
-async function importFromPortal(portalCustomers) {
-  if(!portalCustomers||!portalCustomers.length) return;
-  let added=0, updated=0;
-  portalCustomers.forEach(pc => {
-    const idx=customers.findIndex(ec=>(pc.phone&&pc.phone===ec.phone)||(pc.consumerAcc&&pc.consumerAcc===ec.consumerAcc)||(pc.appNo&&ec.notes&&ec.notes.includes(pc.appNo)));
-    if(idx>=0){
-      ['agr','fin','dcr','inst','insp','subReq','subDisb','sanctionedLoad','statusRaw','kw'].forEach(f=>{if(pc[f]!==undefined&&pc[f]!==''&&pc[f]!==customers[idx][f])customers[idx][f]=pc[f];});
-      updated++;
-    } else {
-      const prefix=(vendor.company||'SOL').slice(0,3).toUpperCase();
-      const newId=prefix+'-'+String(customers.length+1).padStart(3,'0');
-      customers.push({id:newId,name:pc.name||'Unknown',phone:pc.phone||'',kw:parseFloat(pc.kw)||0,loc:pc.loc||pc.discom||'',agr:pc.agr||'pending',fin:pc.fin||'pending',dcr:pc.dcr||'pending',inst:pc.inst||'pending',insp:pc.insp||'pending',subReq:pc.subReq||'pending',subDisb:pc.subDisb||'pending',sub:pc.subDisb||'pending',subAmt:0,subRecv:0,loan:0,bank:'',dcrNo:'',dcrDate:'',instDate:'',consumerAcc:pc.consumerAcc||'',sanctionedLoad:pc.sanctionedLoad||0,statusRaw:pc.statusRaw||'',notes:[pc.appNo?'App No: '+pc.appNo:'',pc.discom?'Discom: '+pc.discom:'',pc.submittedOn?'Submitted: '+pc.submittedOn:''].filter(Boolean).join(' | '),remind:'',remindTime:'10:00',docs:{},docInputs:{},panelSerials:{}});
-      added++;
-    }
-  });
-  await syncToServer();
-  render(); updateDocSel(); updateMetrics();
-  showToast(`☀️ Sync done! ${added} new, ${updated} updated.`, 5000);
-}
-
-// Enter key support
-document.addEventListener('keydown', e => {
-  if(e.key==='Enter'&&document.getElementById('login-card').style.display!=='none') doLogin();
-  if(e.key==='Enter'&&document.getElementById('register-card').style.display!=='none') doRegister();
-  if(e.key==='Escape') { document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open')); }
-});
-</script>
-
-<!-- Portal Connect Modal -->
-<div class="modal-overlay" id="portal-modal">
-  <div class="modal" style="max-width:540px">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
-      <div style="font-size:28px">☀️</div>
-      <div>
-        <div class="modal-title" style="margin-bottom:0">Sync PM Surya Ghar Customers</div>
-        <div style="font-size:13px;color:var(--text-sec)">One-time setup • Works in any browser • No extension needed</div>
-      </div>
-    </div>
-    <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
-    
-    <!-- Step indicators -->
-    <div style="display:flex;gap:8px;margin-bottom:16px">
-      <div style="flex:1;background:var(--blue);color:#fff;border-radius:8px;padding:10px;text-align:center;font-size:12px;font-weight:700">
-        <div style="font-size:20px;margin-bottom:4px">1️⃣</div>
-        Copy script below
-      </div>
-      <div style="flex:1;background:#E2E8F0;color:#64748B;border-radius:8px;padding:10px;text-align:center;font-size:12px;font-weight:700">
-        <div style="font-size:20px;margin-bottom:4px">2️⃣</div>
-        Open portal, F12 → Console
-      </div>
-      <div style="flex:1;background:#E2E8F0;color:#64748B;border-radius:8px;padding:10px;text-align:center;font-size:12px;font-weight:700">
-        <div style="font-size:20px;margin-bottom:4px">3️⃣</div>
-        Type "allow pasting" → paste → Enter
-      </div>
-    </div>
-
-    <!-- Script box -->
-    <div style="margin-bottom:12px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <label style="font-size:12px;font-weight:700;color:var(--text-sec);text-transform:uppercase">Your Sync Script</label>
-        <button class="btn btn-blue" style="padding:6px 14px;font-size:12px" id="copy-btn" onclick="copyScript()">📋 Copy Script</button>
-      </div>
-      <div id="script-box" style="background:#0F172A;color:#7DD3FC;padding:12px;border-radius:8px;font-family:'DM Mono',monospace;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;border:2px solid transparent" onclick="copyScript()">Loading...</div>
-      <div style="font-size:11px;color:var(--text-sec);margin-top:4px">👆 Click to copy</div>
-    </div>
-
-    <!-- Quick link -->
-    <a href="https://vendor.pmsuryaghar.gov.in/vendor/#/signed-in/my-application" target="_blank" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:12px;display:flex">
-      🌐 Open PM Surya Ghar Portal
-    </a>
-
-    <div id="portal-connected-info" style="display:none;background:var(--green-bg);border-radius:8px;padding:12px;font-size:13px;color:var(--green);font-weight:600">
-      ✅ Portal synced! Last sync: <span id="last-sync-time">Never</span>
-    </div>
-
-    <div id="portal-connected-info" style="display:none;background:var(--green-bg);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px;color:var(--green);font-weight:600">
-      ✅ Portal connected! Last sync: <span id="last-sync-time">Never</span>
-    </div>
-
-    <div style="background:#FEF3C7;border-radius:8px;padding:12px;margin-bottom:16px">
-      <div style="font-size:12px;color:#92400E;font-weight:600">⚠️ Token expires after 8 hours</div>
-      <div style="font-size:12px;color:#92400E;margin-top:2px">Click the bookmark again after logging back into the portal</div>
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn btn-outline" onclick="closeModal('portal-modal')">Close</button>
-    </div>
-  </div>
-</div>
-
-<script>
+// ── Portal Connect ──
 function buildSyncScript(crmUrl, crmToken) {
-  return `(function(){
-    var C='${crmUrl}',T='${crmToken}';
-    if(!T){alert('Log into SolarCRM first');return;}
-    var t=document.createElement('div');
-    t.style='position:fixed;top:16px;right:16px;background:#185FA5;color:#fff;padding:12px 18px;border-radius:8px;font-family:sans-serif;font-size:13px;font-weight:700;z-index:99999;max-width:300px';
-    t.textContent='\u2600\uFE0F Capturing token...';
-    document.body.appendChild(t);
-    
-    var auth=null;
-    var origSet=XMLHttpRequest.prototype.setRequestHeader;
-    XMLHttpRequest.prototype.setRequestHeader=function(n,v){
-      if(n.toLowerCase()==='authorization'&&v&&v.length>50)auth=v;
-      return origSet.apply(this,arguments);
-    };
-    var origOpen=window.fetch;
-    window.fetch=function(u,o){
-      if(o&&o.headers){var h=o.headers;var a=typeof h.get==='function'?h.get('Authorization'):(h['Authorization']||'');if(a&&a.length>50)auth=a;}
-      return origOpen.apply(this,arguments);
-    };
-    
-    function waitForToken(tries){
-      if(auth){
-        XMLHttpRequest.prototype.setRequestHeader=origSet;
-        window.fetch=origOpen;
-        t.textContent='\u2600\uFE0F Token captured! Fetching...';
-        fetchAll();
-      } else if(tries>0){
-        setTimeout(function(){waitForToken(tries-1);},500);
-      } else {
-        XMLHttpRequest.prototype.setRequestHeader=origSet;
-        window.fetch=origOpen;
-        t.textContent='\u274C Could not capture token. Please refresh portal and try again.';
-        setTimeout(function(){t.parentNode&&t.parentNode.removeChild(t);},4000);
-      }
-    }
-    
-    function triggerRequest(){
-      var x=new XMLHttpRequest();
-      x.open('GET','/authenticate/api/verifyAccess/vendor/api/myapplication/getMyApplicationList?pageNo=1&pageSize=1');
-      x.send();
-    }
-    
-    setTimeout(triggerRequest,200);
-    waitForToken(20);
-    
-    var all=[],p=1;
-    function fetchAll(){
-      var x=new XMLHttpRequest();
-      x.open('GET','/authenticate/api/verifyAccess/vendor/api/myapplication/getMyApplicationList?pageNo='+p+'&pageSize=25');
-      x.setRequestHeader('Authorization',auth);
-      x.setRequestHeader('Content-Type','application/json');
-      x.onreadystatechange=function(){
-        if(x.readyState!==4)return;
-        if(x.status!==200){t.textContent='\u274C Error '+x.status;return;}
-        var d=JSON.parse(x.responseText);
-        var list=d.data||d.applicationList||d.content||d.list||d.records||(Array.isArray(d)?d:[]);
-        if(!list.length){sendAll();return;}
-        all=all.concat(list);
-        var tot=d.totalCount||d.totalElements||d.total||0;
-        t.textContent='\u2600\uFE0F Fetched '+all.length+(tot?' of '+tot:'');
-        if((tot>0&&all.length>=tot)||list.length<25){sendAll();}
-        else{p++;fetchAll();}
-      };
-      x.send();
-    }
-    
-    function sendAll(){
-      t.textContent='\u2600\uFE0F Saving '+all.length+'...';
-      var x=new XMLHttpRequest();
-      x.open('POST',C+'/api/sync-portal-customers');
-      x.setRequestHeader('Content-Type','application/json');
-      x.setRequestHeader('Authorization','Bearer '+T);
-      x.onreadystatechange=function(){
-        if(x.readyState!==4)return;
-        try{
-          var d=JSON.parse(x.responseText);
-          t.textContent=d.success?'\u2705 Done! '+d.count+' customers saved.':'\u274C '+(d.error||'Error');
-        }catch(e){t.textContent='\u274C '+e.message;}
-        setTimeout(function(){t.parentNode&&t.parentNode.removeChild(t);},5000);
-      };
-      x.send(JSON.stringify({customers:all}));
-    }
-  })()`;
+  return `(function(){var C='${crmUrl}',T='${crmToken}';if(!T){alert('Token missing');return;}var t=document.createElement('div');t.style='position:fixed;top:16px;right:16px;background:#185FA5;color:#fff;padding:12px 18px;border-radius:8px;font-family:sans-serif;font-size:13px;font-weight:700;z-index:99999';t.textContent='\\u2600\\uFE0F Fetching...';document.body.appendChild(t);var all=[],p=1;function go(){var x=new XMLHttpRequest();x.open('GET','/authenticate/api/verifyAccess/vendor/api/myapplication/getMyApplicationList?pageNo='+p+'&pageSize=25');x.setRequestHeader('Content-Type','application/json');x.onreadystatechange=function(){if(x.readyState!==4)return;if(x.status!==200){t.textContent='\\u274C Error '+x.status;return;}var d=JSON.parse(x.responseText);var list=d.data||d.applicationList||d.content||d.list||d.records||(Array.isArray(d)?d:[]);if(!list.length){save();return;}all=all.concat(list);var tot=d.totalCount||d.totalElements||d.total||0;t.textContent='\\u2600\\uFE0F '+all.length+(tot?'/'+tot:'');if((tot>0&&all.length>=tot)||list.length<25)save();else{p++;go();}};x.send();}function save(){t.textContent='\\u2600\\uFE0F Saving '+all.length+'...';var x=new XMLHttpRequest();x.open('POST',C+'/api/sync-portal-customers');x.setRequestHeader('Content-Type','application/json');x.setRequestHeader('Authorization','Bearer '+T);x.onreadystatechange=function(){if(x.readyState!==4)return;try{var d=JSON.parse(x.responseText);t.textContent=d.success?'\\u2705 Done! '+d.count+' saved!':'\\u274C '+(d.error||'Error');}catch(e){t.textContent='\\u274C '+e.message;}setTimeout(function(){t.parentNode&&t.parentNode.removeChild(t);},5000);};x.send(JSON.stringify({customers:all}));}go();})()`;
 }
 
-function showPortalConnect() {
-  const crmUrl = window.location.origin;
-  const crmToken = localStorage.getItem('solarcrm_token') || '';
-  const script = buildSyncScript(crmUrl, crmToken);
+function showPortalConnect(){
+  const script = buildSyncScript(window.location.origin, localStorage.getItem('solarcrm_token')||'');
   const box = document.getElementById('script-box');
-  if (box) box.textContent = script;
+  if(box) box.textContent = script;
   openModal('portal-modal');
 }
 
-function copyScript() {
+function copyScript(){
   const script = document.getElementById('script-box').textContent;
-  if (script === 'Loading...') { showToast('Please wait...', 1000); return; }
-  const copy = (text) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(onCopied).catch(fallback);
-    } else { fallback(); }
+  const onDone = () => {
+    const btn=document.getElementById('copy-btn');btn.textContent='✅ Copied!';btn.style.background='#16A34A';
+    document.getElementById('script-box').style.borderColor='#16A34A';
+    showToast('✅ Script copied! Paste in portal console.',4000);
+    setTimeout(()=>{btn.textContent='📋 Copy Script';btn.style.background='';document.getElementById('script-box').style.borderColor='transparent';},3000);
   };
-  const fallback = () => {
-    const ta = document.createElement('textarea');
-    ta.value = script; document.body.appendChild(ta); ta.select();
-    document.execCommand('copy'); document.body.removeChild(ta); onCopied();
-  };
-  const onCopied = () => {
-    const btn = document.getElementById('copy-btn');
-    btn.textContent = '✅ Copied!'; btn.style.background = '#16A34A';
-    document.getElementById('script-box').style.borderColor = '#16A34A';
-    setTimeout(() => { btn.textContent = '📋 Copy Script'; btn.style.background = ''; document.getElementById('script-box').style.borderColor = 'transparent'; }, 3000);
-    showToast('✅ Script copied! Paste it in the portal console.', 4000);
-  };
-  copy(script);
+  if(navigator.clipboard){navigator.clipboard.writeText(script).then(onDone).catch(()=>{const ta=document.createElement('textarea');ta.value=script;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);onDone();});}
+  else{const ta=document.createElement('textarea');ta.value=script;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);onDone();}
 }
 
-function copyMyToken() {
-  const t = localStorage.getItem('solarcrm_token');
-  if (!t) return;
-  navigator.clipboard.writeText(t).then(() => showToast('Token copied!', 3000));
-}
+// Auto-refresh customers every 30 seconds
+setInterval(async()=>{
+  if(!token)return;
+  try{const res=await apiFetch('/api/customers');if(!res.ok)return;const raw=await res.json();const nc=raw.map(dbToLocal);if(nc.length!==customers.length){customers=nc;render();updateDocSel();updateMetrics();showToast('☀️ '+customers.length+' customers synced!',3000);}}
+  catch(e){}
+},30000);
 
-// Poll for new customers every 30 seconds
-setInterval(async function() {
-  if (!token) return;
-  try {
-    const res = await apiFetch('/api/customers');
-    if (!res.ok) return;
-    const raw = await res.json();
-    const newCustomers = raw.map(dbToLocal);
-    if (newCustomers.length !== customers.length) {
-      customers = newCustomers;
-      render(); updateDocSel(); updateMetrics();
-      showToast('☀️ ' + customers.length + ' customers synced!', 4000);
-    }
-  } catch(e) {}
-}, 30000);
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&document.getElementById('login-card').style.display!=='none')doLogin();
+  if(e.key==='Enter'&&document.getElementById('register-card').style.display!=='none')doRegister();
+  if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open'));
+});
 </script>
 </body>
 </html>
